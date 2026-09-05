@@ -161,8 +161,11 @@ test.describe('a league with no games played', () => {
   test('shows an empty state on every tab instead of an error', async ({ page }) => {
     await page.goto(`/#/l/${PRE_DRAFT_LEAGUE_ID}/awards`);
 
-    await expect(page.getByText('Pre-draft')).toBeVisible();
+    // `exact` matches the status badge, not the sentence in the empty state
+    // that now also says "pre-draft".
+    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
     await expect(page.getByText('No games played yet')).toBeVisible();
+    await expect(page.getByText('This league is pre-draft.')).toBeVisible();
 
     await page.getByRole('link', { name: 'Standings' }).click();
     await expect(page.getByText('Standings open in week 1')).toBeVisible();
