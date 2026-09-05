@@ -63,7 +63,6 @@ export function AllTimeRoute({ view }: { view: AllTimeView }) {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={LEAGUE.name}
         title="All-time"
         meta={
           pending ? (

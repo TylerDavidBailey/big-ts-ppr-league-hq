@@ -53,37 +53,34 @@ function StatusMeta({ season, updatedAt }: { season: SeasonModel; updatedAt: num
     parts.push(throughWeek ? `Settled through week ${throughWeek}` : 'No week final yet');
     parts.push(`Updated ${formatRelativeTime(updatedAt)}`);
   } else if (!season.hasScores) {
-    parts.push(`The ${season.season} season has not started`);
+    parts.push('No games played yet');
+  } else {
+    parts.push(`Regular season weeks 1 to ${season.regularSeasonEndWeek}`);
   }
   if (season.usesMedianScoring) {
     parts.push('Scores against the weekly median too, so records come from Sleeper');
   }
 
-  return (
-    <>
-      {parts.map((part, index) => (
-        <span key={part} className="flex items-center gap-2">
-          {index > 0 ? <span aria-hidden>·</span> : null}
-          <span>{part}</span>
-        </span>
-      ))}
-    </>
-  );
+  // A no-break space before each dot keeps the separator on the line it ends.
+  return <span>{parts.join(' · ')}</span>;
 }
 
 /** The pot, from the config and the roster count. */
 function Pot({ season }: { season: SeasonModel }) {
   const teams = season.teams.length;
   return (
-    <div className="rounded-xl border border-gold/30 bg-gold/[0.06] px-4 py-2 text-right">
-      <p className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
+    <Link
+      to={`/${season.season}/rules`}
+      className="flex items-baseline gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] px-3.5 py-2 transition hover:border-gold/60"
+    >
+      <span className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
         Pot
-      </p>
-      <p className="font-display text-2xl font-bold tabular text-gold">
+      </span>
+      <span className="font-display text-xl font-bold tabular text-gold">
         {formatMoney(LEAGUE.buyIn * teams)}
-      </p>
-      <p className="text-xs text-ink-dim">{formatMoney(LEAGUE.buyIn)} a team</p>
-    </div>
+      </span>
+      <span className="text-xs text-ink-dim">{formatMoney(LEAGUE.buyIn)} a team</span>
+    </Link>
   );
 }
 
@@ -143,7 +140,6 @@ export function SeasonRoute({ view }: { view: SeasonView }) {
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow={LEAGUE.name}
         title={`${season.season} season`}
         badges={<StatusBadge season={season} />}
         meta={<StatusMeta season={season} updatedAt={seasonQuery.dataUpdatedAt} />}

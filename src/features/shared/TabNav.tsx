@@ -8,11 +8,11 @@ export interface TabItem {
   active: boolean;
 }
 
-/** The section strip under a page heading. Scrolls sideways on a phone. */
+/** The section strip under a page heading. Wraps to a second row on a phone. */
 export function TabNav({ label, items }: { label: string; items: TabItem[] }) {
   return (
-    <nav aria-label={label} className="-mx-5 overflow-x-auto px-5">
-      <ul className="flex min-w-max gap-1 rounded-xl border border-hairline bg-surface/60 p-1">
+    <nav aria-label={label}>
+      <ul className="flex flex-wrap gap-1 rounded-xl border border-hairline bg-surface/60 p-1">
         {items.map((item) => (
           <li key={item.to}>
             <Link

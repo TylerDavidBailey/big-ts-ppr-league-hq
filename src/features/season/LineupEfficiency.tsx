@@ -49,7 +49,7 @@ export function LineupEfficiency({ season }: { season: SeasonModel }) {
               </Td>
               <Td>
                 {row.biggestBench ? (
-                  <span className="flex items-center gap-3">
+                  <span className="flex items-center justify-between gap-3">
                     <PlayerChip player={lookupPlayer(playerIndex, row.biggestBench.playerId)} />
                     <span className="shrink-0 text-right">
                       <span className="block text-sm font-semibold tabular text-ink">

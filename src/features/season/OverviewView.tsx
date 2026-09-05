@@ -6,7 +6,6 @@ import { ThisWeekHero } from './ThisWeekHero';
 import { TeamChip } from '../shared/TeamChip';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { StatTile } from '@/components/ui/StatTile';
 import { HeadRow, RankCell, Row, Table, Td, Th } from '@/components/ui/Table';
 import { beerDutyTally, type RankedEntry, type SeasonAwards } from '@/domain/awards';
@@ -100,6 +99,7 @@ function BeerDutyGlance({ season, awards }: OverviewViewProps) {
       value={first ? `${first.value}×` : undefined}
       tone="loss"
       badge={leaders.length > 1 ? <Badge tone="purple">Tied</Badge> : null}
+      footer={<SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>}
     >
       {first ? (
         leaders.map((leader) => (
@@ -134,10 +134,12 @@ function PlayoffPicture({ season }: { season: SeasonModel }) {
       </CardHeader>
       <Table caption={`${season.season} playoff picture`}>
         <HeadRow>
-          <Th>#</Th>
+          <Th className="w-12">#</Th>
           <Th>Team</Th>
           <Th align="right">Record</Th>
-          <Th align="right">PF</Th>
+          <Th align="right" className="hidden sm:table-cell">
+            PF
+          </Th>
         </HeadRow>
         <tbody>
           {rows.map((row) => (
@@ -150,7 +152,7 @@ function PlayoffPicture({ season }: { season: SeasonModel }) {
                 {formatRecord(row.wins, row.losses, row.ties)}
                 {row.tied ? <span className="ml-1 text-xs text-ink-dim">T</span> : null}
               </Td>
-              <Td align="right" className="text-ink-muted">
+              <Td align="right" className="hidden text-ink-muted sm:table-cell">
                 {formatPoints(row.pointsFor)}
               </Td>
             </Row>
@@ -198,11 +200,6 @@ export function OverviewView({ season, awards }: OverviewViewProps) {
   if (!season.hasScores) {
     return (
       <div className="space-y-5">
-        <EmptyState
-          icon="⏳"
-          title="No games played yet"
-          description="Awards appear once week 1 is final. Here is what is on the line."
-        />
         <RulesCard season={season} />
         <Podium season={season} awards={awards} />
         <Managers season={season} />
