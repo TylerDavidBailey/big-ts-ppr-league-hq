@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  formatPoints,
+  formatRecord,
+  isValidLeagueId,
+  ordinal,
+  placementLabel,
+  statusLabel,
+} from './format';
+
+describe('formatPoints', () => {
+  it('always shows two decimals', () => {
+    expect(formatPoints(98.6)).toBe('98.60');
+    expect(formatPoints(100)).toBe('100.00');
+    expect(formatPoints(1805.78)).toBe('1,805.78');
+  });
+});
+
+describe('formatRecord', () => {
+  it('omits ties when there are none', () => {
+    expect(formatRecord(6, 8, 0)).toBe('6-8');
+    expect(formatRecord(6, 7, 1)).toBe('6-7-1');
+  });
+});
+
+describe('ordinal', () => {
+  it('picks the right English suffix', () => {
+    expect(['1st', '2nd', '3rd', '4th', '11th', '21st', '22nd', '23rd']).toEqual([
+      ordinal(1),
+      ordinal(2),
+      ordinal(3),
+      ordinal(4),
+      ordinal(11),
+      ordinal(21),
+      ordinal(22),
+      ordinal(23),
+    ]);
+  });
+});
+
+describe('placementLabel', () => {
+  it('names the podium and falls back to an ordinal', () => {
+    expect(placementLabel(1)).toBe('Champion');
+    expect(placementLabel(2)).toBe('Runner-up');
+    expect(placementLabel(3)).toBe('Third place');
+    expect(placementLabel(7)).toBe('7th place');
+  });
+});
+
+describe('statusLabel', () => {
+  it('humanises known Sleeper statuses and passes through the rest', () => {
+    expect(statusLabel('pre_draft')).toBe('Pre-draft');
+    expect(statusLabel('complete')).toBe('Complete');
+    expect(statusLabel('some_new_status')).toBe('some new status');
+  });
+});
+
+describe('isValidLeagueId', () => {
+  it('accepts real Sleeper ids and rejects anything else', () => {
+    expect(isValidLeagueId('1373305494734651392')).toBe(true);
+    expect(isValidLeagueId('  1373305494734651392  ')).toBe(true);
+    expect(isValidLeagueId('12345')).toBe(false);
+    expect(isValidLeagueId('not-an-id')).toBe(false);
+    expect(isValidLeagueId('')).toBe(false);
+  });
+});

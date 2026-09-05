@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+
+/*
+ * Palette lifted from Sleeper's own production stylesheet so the app reads as a
+ * natural extension of their UI. Token names mirror theirs (`--palette-*`) with
+ * semantic aliases layered on top; change a semantic alias, not a raw hex, when
+ * restyling.
+ */
+@theme {
+  /* Raw palette --------------------------------------------------------- */
+  --color-palette-gray900: #05091d;
+  --color-palette-gray800: #15182d;
+  --color-palette-gray700: #252942;
+  --color-palette-gray600: #343855;
+  --color-palette-gray500: #414566;
+  --color-palette-gray400: #60648c;
+  --color-palette-gray300: #5f7ba9;
+  --color-palette-gray200: #98b3d6;
+  --color-palette-gray100: #eef2f7;
+
+  --color-palette-emerald: #00fff9;
+  --color-palette-aqua: #00d7ff;
+  --color-palette-mint: #00ffc6;
+  --color-palette-green: #7cff71;
+  --color-palette-lime: #e7fe53;
+  --color-palette-yellow: #ffdc00;
+  --color-palette-orange: #ff7a00;
+  --color-palette-salmon: #ff6482;
+  --color-palette-red: #ff005c;
+  --color-palette-purple: #644af7;
+  --color-palette-lavender: #b8bfff;
+  --color-palette-lilac: #c96cff;
+
+  /* Semantic aliases ---------------------------------------------------- */
+  --color-canvas: var(--color-palette-gray900);
+  --color-surface: var(--color-palette-gray800);
+  --color-card: var(--color-palette-gray700);
+  --color-raised: var(--color-palette-gray600);
+
+  --color-ink: var(--color-palette-gray100);
+  --color-ink-muted: var(--color-palette-gray200);
+  --color-ink-dim: var(--color-palette-gray300);
+
+  --color-brand: var(--color-palette-emerald);
+  --color-accent: var(--color-palette-aqua);
+  --color-win: var(--color-palette-green);
+  --color-loss: var(--color-palette-red);
+  --color-gold: var(--color-palette-yellow);
+
+  --color-hairline: rgb(255 255 255 / 0.1);
+  --color-hairline-strong: rgb(255 255 255 / 0.18);
+
+  /* Type ---------------------------------------------------------------- */
+  --font-sans:
+    'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Oswald', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', monospace;
+
+  /* Motion -------------------------------------------------------------- */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Sleeper leans on tight, condensed uppercase for anything numeric. */
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: var(--color-canvas);
+  }
+}
+
+@layer utilities {
+  /* Tabular figures keep score columns from jittering between weeks. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .glow-brand {
+    box-shadow:
+      0 0 0 1px rgb(0 255 249 / 0.25),
+      0 0 24px -6px rgb(0 255 249 / 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

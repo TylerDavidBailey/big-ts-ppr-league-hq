@@ -1,0 +1,6 @@
+# Every change gets a review request. Adjust once there are more maintainers.
+*                       @TylerDavidBailey
+
+# The award registry is the app's main extension point.
+/src/domain/            @TylerDavidBailey
+/.github/workflows/     @TylerDavidBailey

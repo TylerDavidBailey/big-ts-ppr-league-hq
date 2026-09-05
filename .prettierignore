@@ -1,0 +1,8 @@
+dist/
+coverage/
+node_modules/
+public/data/players.min.json
+src/test/fixtures/
+package-lock.json
+playwright-report/
+test-results/
