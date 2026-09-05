@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatMoney,
+  formatPercent,
   formatPoints,
   formatRecord,
-  isValidLeagueId,
+  formatSigned,
   ordinal,
   placementLabel,
   statusLabel,
@@ -56,12 +58,24 @@ describe('statusLabel', () => {
   });
 });
 
-describe('isValidLeagueId', () => {
-  it('accepts real Sleeper ids and rejects anything else', () => {
-    expect(isValidLeagueId('1373305494734651392')).toBe(true);
-    expect(isValidLeagueId('  1373305494734651392  ')).toBe(true);
-    expect(isValidLeagueId('12345')).toBe(false);
-    expect(isValidLeagueId('not-an-id')).toBe(false);
-    expect(isValidLeagueId('')).toBe(false);
+describe('formatMoney', () => {
+  it('shows whole dollars with a thousands separator', () => {
+    expect(formatMoney(125)).toBe('$125');
+    expect(formatMoney(1500)).toBe('$1,500');
+  });
+});
+
+describe('formatPercent', () => {
+  it('turns a ratio into a percentage', () => {
+    expect(formatPercent(0.6429)).toBe('64.3%');
+    expect(formatPercent(1, 0)).toBe('100%');
+  });
+});
+
+describe('formatSigned', () => {
+  it('keeps the sign on both sides of zero', () => {
+    expect(formatSigned(1.5)).toBe('+1.50');
+    expect(formatSigned(-0.25)).toBe('-0.25');
+    expect(formatSigned(0)).toBe('0.00');
   });
 });

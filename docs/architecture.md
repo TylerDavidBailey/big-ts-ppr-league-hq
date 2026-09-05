@@ -2,88 +2,114 @@
 
 Why this codebase is shaped the way it is, and which constraints drove each decision.
 
-For endpoint facts, read [the Sleeper API reference](sleeper-api.md). For the steps to add
-an award, read [Adding an award](adding-an-award.md).
+For endpoint facts, read [the Sleeper API reference](sleeper-api.md).
+
+## One league, one config
+
+The site serves one league. Its Sleeper id, the buy-in, every payout, the award names and
+rules, and the punishment text live in `src/league.config.ts`. Nothing else in the repo
+knows a dollar amount or an award name.
+
+The config holds one season's id, and the site works out the rest. Earlier seasons are
+found by walking `previous_league_id` back. Sleeper offers no forward link, so
+`resolveHead` in `src/lib/sleeper/head.ts` finds newer seasons another way: when the
+configured league is `complete`, it lists the commissioner's leagues for the following year
+and picks the one whose `previous_league_id` points back. It repeats until nothing newer
+turns up, and asks two more managers if the commissioner has left. A new season therefore
+needs no edit at all. During the season and before the draft the league is not `complete`,
+so the lookup costs nothing.
 
 ## One pure function at the centre
 
 `buildSeason()` in `src/domain/buildSeason.ts` takes raw Sleeper JSON and returns one
-`SeasonModel`. Standings, brackets, awards, and every tab read that model. Nothing below
-`src/lib/sleeper/queries.ts` imports React or calls `fetch`.
+`SeasonModel`. Every award, every stat, and every tab reads that model. Nothing under
+`src/domain/` imports React or calls `fetch`.
 
-That boundary buys two things.
-
-The league logic is testable without a network or a browser. `scripts/capture-fixtures.mjs`
-saved the real responses from a finished 12-team season into `src/test/fixtures/`, and the
-tests assert against actual numbers. `scripts/anonymize-fixtures.mjs` swaps the handles,
-user ids, avatars, and league name for synthetic ones before anything is written, so the
-repo carries real scores without carrying real people. `src/domain/standings.test.ts` checks that computed
-wins, losses, and points match what Sleeper itself reports for all 12 rosters, and that the
-computed form strip matches the `metadata.record` string character for character. A
-mistake in the pairing logic fails that test immediately.
-
-The second gain is that awards stay trivial. An award is a loop over
-`season.regularSeasonWeeks` and nothing more, because the model has already resolved
-opponents, outcomes, and lineup slots.
+That boundary buys testability. `scripts/capture-fixtures.mjs` saved the real responses from
+the league's finished 2025 season into `src/test/fixtures/`, and the tests assert against
+actual numbers. `scripts/anonymize-fixtures.mjs` swaps the handles, user ids, avatars, and
+league name for synthetic ones before anything is written, so the repo carries real scores
+without carrying real people.
 
 The browser tests in `e2e/` reuse the same fixtures through Playwright request
-interception. A test can assert that the Awards tab shows `200.52 pts` and the name
+interception. A test can assert that the awards page shows `200.52 pts` and the name
 Jahmyr Gibbs, and still pass during a Sleeper outage. `e2e/live.spec.ts` calls the real
-API and is opt-in, so a change on Sleeper's side gets caught deliberately rather than by
-a red build on an unrelated pull request.
+API and is opt-in, so a change on Sleeper's side gets caught deliberately rather than by a
+red build on an unrelated pull request.
+
+## Three pure layers on top of the model
+
+`src/domain/awards.ts` computes the four awards. Each is a ranked list, not a single
+winner, so a card can show the places behind the winner. `rankPlaces` assigns competition
+places, where two teams level for first are both 1 and the next is 3, and marks every tie.
+An award decided by a strict comparison would hand the win to whichever roster the loop
+reached first, and no league agreed to that.
+
+`src/domain/stats.ts` derives power rankings, lineup efficiency, and season superlatives.
+Power rankings use the all-play record: each week a team is scored against every other
+team, and luck is the gap between the wins it has and the wins that scoring deserved.
+Lineup efficiency divides Sleeper's `fpts` by its `ppts`, which is the optimal-lineup
+total, so no lineup solver is needed.
+
+`src/domain/history.ts` tallies across seasons. Each season is its own Sleeper league with
+its own roster ids, so managers are matched by Sleeper user id, which is stable, and named
+from the newest season they appear in. A season still in progress contributes its games so
+far and nothing else: no title, no 1 seed, no season-total record.
+
+## Managers come and go, and rename themselves
+
+Each season is a separate Sleeper league, so roster numbers mean nothing across years.
+`managerKey` in `src/domain/history.ts` identifies a manager by Sleeper user id, which
+survives a handle change. A renamed manager keeps one all-time row under their current
+handle, with the old handles listed as aliases, and a record holder shows the handle they
+used that season.
+
+A manager who left keeps their row, named from the last season they played. A manager who
+joined for a season that has not started yet has no row until week 1 is final. A roster
+with no owner is keyed by league and roster number, so two orphaned rosters from different
+years never merge.
+
+Three cases the API cannot resolve, so the site does not try:
+
+- A roster's owner changes mid-season. Sleeper reports only the current owner, so the
+  whole season is credited to whoever holds the roster when the page loads.
+- A co-managed roster is credited to its primary owner, `owner_id`. If two people swap
+  primary and co-owner between seasons, they become two rows.
+- A season created without `previous_league_id` is not in the chain and does not appear.
+
+All three stats layers read `season.regularSeasonWeeks`, which excludes the week being played. Sleeper
+posts scores from Thursday night, and a half-played week would otherwise hand out a record
+and a beer duty from a partial slate.
 
 ## Standings are computed, not read
 
-Sleeper reports `wins`, `losses`, and `fpts` on each roster. The app ignores those for
-ranking and computes standings from matchup results instead.
+Sleeper reports `wins`, `losses`, and `fpts` on each roster. The app computes standings
+from matchup results instead, so "regular season" means weeks 1 through
+`playoff_week_start - 1` for this league and stays correct mid-season.
 
-The reason is that "regular season" has to mean weeks 1 through
-`playoff_week_start - 1` for the league being viewed. A league with a 16-week regular
-season must work without a code change. Roster totals can also include consolation games,
-depending on league settings.
+The reported totals are kept on `Team.reported`. The tests check that computed wins,
+losses, and points match them for all 12 rosters, and lineup efficiency reads `ppts` from
+there.
 
-Sleeper's reported totals are kept on `Team.reported` and used as a cross-check in the
-tests, not as a source of truth for ranking.
+## One query per season
 
-## Awards are a registry of pure functions
+`src/lib/sleeper/season.ts` fetches a season whole: users, rosters, both brackets, every
+week, and the NFL clock, in parallel, then calls `buildSeason`. `src/lib/sleeper/queries.ts`
+wraps that in one TanStack Query per league id.
 
-`src/domain/awards/registry.ts` exports an array. Each entry is an `AwardDefinition` with a
-`compute` function from `SeasonModel` to a winner. The Awards tab renders whatever is in
-the array.
+One query per season means the season tabs and the all-time tabs share a cache entry. A
+season opened once costs nothing on the all-time page. `staleTime` is `Infinity` for a
+season whose `status` is `complete`, because a finished season never changes. The live
+season is refetched every two minutes while the tab is open.
 
-The stated goal for this project was that adding a season award later should be easy. A
-registry delivers that: one new file under `definitions/`, one line in the array, and no
-view code changes.
+Two trims keep the request count down. A pre-draft league fetches only users and rosters,
+because its weeks and brackets are known to be empty. Weeks are requested through the
+championship week, which `lastWeekOfSeason` derives from `playoff_week_start` and
+`playoff_teams`. A finished season costs 21 requests. The all-time page, with three played
+seasons and one pre-draft, costs about 70, against Sleeper's guidance of 1000 a minute.
 
-`resolveAwards` wraps each `compute` in a try/catch and reports a thrown award as
-undecided. One broken award never blanks the page.
-
-Four awards ship: `regular-season-champ`, `highest-team-week`, `highest-player-week`, and
-`weekly-punishment`. They match the reference league's rules.
-
-## No dollar amounts
-
-The app shows placements and award winners. It never shows money.
-
-Payout structures are private to a league and vary between them, and the site is meant to
-be shareable with strangers. Rendering one league's numbers to everyone would be wrong.
-
-## Fetching
-
-`src/lib/sleeper/queries.ts` gives each endpoint its own TanStack Query hook. A season page
-runs six single queries and one `useQueries` over every week.
-
-Per-endpoint queries let the page render as soon as the league, users, and rosters land,
-while week data streams in behind a progress line. Switching seasons reuses whatever is
-already cached.
-
-`staleTime` is `Infinity` for a league whose `status` is `complete`, because a finished
-season never changes. Live leagues get five minutes.
-
-The app requests every week from 1 through the end of the league's playoffs, computed by
-`lastWeekOfSeason()` from `playoff_week_start` and `playoff_round_type`. Unplayed weeks cost
-one cheap `[]` response each, which is simpler than tracking the current week and costs
-about 24 requests per season against a 1000-per-minute budget.
+Nothing is persisted across refreshes. Every load reads fresh from Sleeper, which is the
+point of the site.
 
 ## Player names come from a committed file
 
@@ -95,70 +121,46 @@ writes `public/data/players.min.json` at 420 KB. The file is committed. The
 `refresh-players.yml` workflow regenerates it weekly and opens a pull request when it
 changes.
 
-All 12,226 players are kept, including retired ones, because historical seasons reference
-players who have left the league.
-
 If the index fails to load, `lookupPlayer` returns `Player {id}` and the rest of the page
-works. A CDN hiccup degrades one label, not the app.
+works.
 
 ## Hash routing
 
-`src/app/providers.tsx` uses `HashRouter`.
+`src/app/providers.tsx` uses `HashRouter`. GitHub Pages serves static files with no SPA
+rewrite, so a path route would 404 on a cold load. A hash route needs no trick, and
+`#/2025/standings` survives being pasted into a group chat.
 
-GitHub Pages serves static files with no SPA rewrite. A path route such as
-`/l/123/awards` would 404 on a cold load unless the build copies `index.html` to
-`404.html`. A hash route needs no such trick, and a link like
-`#/l/1252998165817208832/2025/awards` survives being pasted into a group chat.
+`/` is the newest season, so the shared link never goes stale. A year reaches any season.
+`all-time` reads them all.
 
 ## Base path
 
-`vite.config.ts` reads `VITE_BASE`, which CI sets from the repository name. A fork under any
-name deploys correctly without editing the file.
-
-The dev server runs at `/` so local URLs stay short. Builds and `vite preview` both use the
-sub-path, so `make preview-up` catches a base-path mistake before deploy. Anything that
-needs the prefix reads `import.meta.env.BASE_URL`.
-
-## Storage
-
-`src/lib/storage.ts` keeps recently opened leagues in `localStorage` under
-`slhq:v1:recent-leagues`, capped at 8 and ordered most recent first.
-
-Every read is validated with a zod schema. A corrupt blob or a schema change between
-releases returns an empty list rather than throwing on the landing page. The key carries a
-version segment so a future format can change without colliding.
-
-Storage access itself is wrapped in try/catch. Private browsing and blocked site data both
-throw on access in some browsers, and losing the recent list is not worth an error message.
-
-Node 26 defines a native `localStorage` global that stays disabled without
-`--localstorage-file`, and it masks the one jsdom provides. `src/test/localStorageShim.ts`
-installs a working in-memory `Storage` for tests. Browsers are unaffected.
+`vite.config.ts` reads `VITE_BASE`, which CI sets from the repository name. The dev server
+runs at `/` so local URLs stay short. Builds and `vite preview` both use the sub-path, so
+`make preview-up` catches a base-path mistake before deploy.
 
 ## Styling
 
 `src/styles/theme.css` defines the palette in a Tailwind v4 `@theme` block. The raw values
 come from Sleeper's own production stylesheet, so the app reads as an extension of their
-UI: `#05091d` for the page, `#252942` for cards, `#00fff9` for the brand accent.
-
-Semantic aliases sit on top of the raw palette. Change `--color-brand`, not a hex value.
+UI. Semantic aliases sit on top of the raw palette. Change `--color-brand`, not a hex value.
 
 Sleeper uses Inter for UI and Druk Condensed for display type. Druk is proprietary, so the
-app pairs Inter with Oswald, the closest free match, for scores and section headers. Both
-are self-hosted through `@fontsource`, so the page makes no third-party font request.
+app pairs Inter with Oswald, the closest free match. Both are self-hosted through
+`@fontsource`.
 
 ## Layout
 
 ```
 src/
-	app/          providers, router, error boundary, query client
-	components/   UI primitives and site chrome
-	domain/       pure league logic. No React, no fetch
-		awards/     the registry and one file per award
-	features/     landing page and season page with its tabs
-	lib/          Sleeper client, storage, player index, formatting
-	styles/       the theme
-	test/         setup, the localStorage shim, captured fixtures
+	league.config.ts  the league id, money, and rule text
+	app/              providers, router, error boundary, query client
+	components/       UI primitives and site chrome
+	domain/           pure league logic. No React, no fetch
+	features/         the page shell, the season tabs, the all-time tabs
+	lib/              Sleeper client, one-query-per-season fetch, player index, formatting
+	styles/           the theme
+	test/             setup and captured fixtures
 ```
 
 The rule that keeps this honest: `domain/` may not import from `features/`, `app/`, or

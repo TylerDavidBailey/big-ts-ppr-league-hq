@@ -1,215 +1,157 @@
 import { expect, test } from '@playwright/test';
 
-import {
-  FINISHED_LEAGUE_ID,
-  PRE_DRAFT_LEAGUE_ID,
-  UNKNOWN_LEAGUE_ID,
-  mockSleeper,
-} from './fixtures';
+import { mockSleeper } from './fixtures';
 
 test.beforeEach(async ({ page }) => {
   await mockSleeper(page);
 });
 
-test.describe('landing page', () => {
-  test('loads a league from a pasted id', async ({ page }) => {
+test.describe('the landing page', () => {
+  test('shows the newest season with the rules and payouts before any game', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('Sleeper league ID').fill(FINISHED_LEAGUE_ID);
-    await page.getByRole('button', { name: 'Load league' }).click();
 
-    await expect(page).toHaveURL(new RegExp(`#/l/${FINISHED_LEAGUE_ID}`));
-    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible();
+    // `exact` matches the status badge, not the sentence next to it.
+    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
+    await expect(page.getByText('No games played yet')).toBeVisible();
+
+    await expect(page.getByRole('heading', { name: 'Rules and payouts' })).toBeVisible();
+    await expect(page.getByText('$1,500 pot')).toBeVisible();
+
+    // Three podium slots waiting on the season, each with its payout.
+    const podium = page.getByRole('list', { name: 'Playoff finishes' });
+    await expect(podium.getByText('TBD')).toHaveCount(3);
+    await expect(podium.getByText('$700')).toBeVisible();
+    await expect(podium.getByText('$300')).toBeVisible();
+    await expect(podium.getByText('$125')).toBeVisible();
   });
 
-  test('loads a league from a pasted Sleeper URL', async ({ page }) => {
+  test('lists every season in the nav, newest first', async ({ page }) => {
     await page.goto('/');
-    await page
-      .getByLabel('Sleeper league ID')
-      .fill(`https://sleeper.com/leagues/${FINISHED_LEAGUE_ID}/team`);
-    await page.getByRole('button', { name: 'Load league' }).click();
 
-    await expect(page).toHaveURL(new RegExp(`#/l/${FINISHED_LEAGUE_ID}`));
+    const years = page.getByRole('navigation', { name: 'Season', exact: true }).getByRole('link');
+    await expect(years).toHaveText(['2026', '2025', '2024', 'All-time']);
+    await expect(years.first()).toHaveAttribute('aria-current', 'page');
   });
+});
 
-  test('offers an example league to someone with no id', async ({ page }) => {
+test.describe('a new season the config does not know about', () => {
+  test('is found through a manager and becomes the landing page', async ({ page }) => {
+    await mockSleeper(page, { newerSeasonExists: true });
     await page.goto('/');
-    await page.getByRole('link', { name: 'Look at an example league' }).click();
 
-    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
-  });
+    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
+    const years = page.getByRole('navigation', { name: 'Season', exact: true }).getByRole('link');
+    await expect(years).toHaveText(['2026', '2025', '2024', 'All-time']);
+    await expect(years.first()).toHaveAttribute('aria-current', 'page');
 
-  test('rejects an id that is not a league id', async ({ page }) => {
-    await page.goto('/');
-    await page.getByLabel('Sleeper league ID').fill('not-a-league');
-    await page.getByRole('button', { name: 'Load league' }).click();
-
-    await expect(page.getByRole('alert')).toContainText('does not look like a Sleeper league ID');
-    await expect(page).not.toHaveURL(/#\/l\//);
-  });
-
-  test('remembers a league across a browser restart', async ({ page, context }) => {
-    await page.goto(`/#/l/${FINISHED_LEAGUE_ID}/awards`);
-    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
-
-    // A new page in the same context is the same browser profile, so this
-    // exercises the localStorage round-trip rather than in-memory state.
-    const revisit = await context.newPage();
-    await mockSleeper(revisit);
-    await revisit.goto('/');
-
-    const recent = revisit.getByRole('heading', { name: 'Recent leagues' });
-    await expect(recent).toBeVisible();
-    await expect(revisit.getByRole('link', { name: /The Sunday Scaries/ }).first()).toBeVisible();
-
-    // The remove button empties the list again.
-    await revisit
-      .getByRole('button', { name: /Remove .* from recent leagues/ })
-      .first()
-      .click();
-    await expect(recent).toBeHidden();
+    // The configured season is still reachable by year.
+    await page.goto('/#/2025');
+    await expect(page.getByText('Final', { exact: true })).toBeVisible();
   });
 });
 
 test.describe('a finished season', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`/#/l/${FINISHED_LEAGUE_ID}/awards`);
-    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
+    await page.goto('/#/2025');
+    await expect(page.getByText('Final', { exact: true })).toBeVisible();
   });
 
-  test('names the podium from the bracket placement games', async ({ page }) => {
-    const podium = page.getByRole('listitem').filter({ hasText: 'Champion' });
-    await expect(podium).toContainText('redzone_rita');
+  test('names the podium from the bracket, with the money', async ({ page }) => {
+    const podium = page.getByRole('list', { name: 'Playoff finishes' });
+    const champion = podium.getByRole('listitem').filter({ hasText: 'Champion' });
+    await expect(champion).toContainText('redzone_rita');
+    await expect(champion).toContainText('$700');
 
-    await expect(page.getByText('Runner-up')).toBeVisible();
-    await expect(page.getByText('Third place')).toBeVisible();
+    await expect(podium.getByText('Runner-up')).toBeVisible();
+    await expect(podium.getByText('Third place')).toBeVisible();
   });
 
-  test('resolves every season award', async ({ page }) => {
-    await expect(page.getByText('1 Seed')).toBeVisible();
-    await expect(page.getByText('2237.72 PF')).toBeVisible();
+  test('resolves every paid award with five places', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: '1 Seed' })).toBeVisible();
+    await expect(page.getByText('2,237.72 PF')).toBeVisible();
 
-    await expect(page.getByText('Highest Team Week')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Highest Team Week' })).toBeVisible();
     await expect(page.getByText('200.52 pts')).toBeVisible();
 
     // The starter award must name a player, not a raw Sleeper id.
-    await expect(page.getByText('Highest Starter Week')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Highest Starter Week' })).toBeVisible();
     await expect(page.getByText('Jahmyr Gibbs')).toBeVisible();
     await expect(page.getByText('55.40 pts')).toBeVisible();
+
+    // Places 2 to 5 sit under each winner.
+    await expect(page.getByText('5', { exact: true })).toHaveCount(3);
   });
 
   test('lists a beer duty loser for all 14 regular-season weeks', async ({ page }) => {
-    await expect(page.getByText('Beer Duty')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Beer Duty' })).toBeVisible();
     await expect(page.getByText('14 weeks')).toBeVisible();
 
+    const weeks = page.getByRole('list', { name: 'Beer duty by week' });
     for (const week of [1, 7, 14]) {
-      await expect(page.getByText(`Wk ${week}`, { exact: true })).toBeVisible();
+      await expect(weeks.getByText(`Wk ${week}`, { exact: true })).toBeVisible();
     }
     // Week 15 is the playoffs, so it carries no punishment.
-    await expect(page.getByText('Wk 15', { exact: true })).toBeHidden();
+    await expect(weeks.getByText('Wk 15', { exact: true })).toBeHidden();
   });
 
-  test('ranks the standings and matches the reported records', async ({ page }) => {
+  test('ranks the standings and derives the stats behind them', async ({ page }) => {
     await page.getByRole('link', { name: 'Standings' }).click();
+    await expect(page).toHaveURL(/#\/2025\/standings$/);
 
-    const leader = page.getByRole('row').nth(1);
-    await expect(leader).toContainText('HailMaryHank');
+    const leader = page.getByRole('row').filter({ hasText: 'HailMaryHank' }).first();
     await expect(leader).toContainText('14-0');
     await expect(leader).toContainText('2,237.72');
-
-    await expect(page.getByRole('row')).toHaveCount(13); // header plus 12 teams
     await expect(page.getByText('Top 6 make the playoffs, which start in week 15.')).toBeVisible();
-  });
 
-  test('shows matchups week by week and stops at the championship week', async ({ page }) => {
-    await page.getByRole('link', { name: 'Scoreboard' }).click();
-
-    const weeks = page.getByRole('navigation', { name: 'Week' }).getByRole('button');
-    // Weeks 1 to 17. Week 18 has scores but pairs nobody, so it is not a week
-    // of this league.
-    await expect(weeks).toHaveCount(17);
-    await expect(weeks.last()).toHaveText('17');
-
-    await weeks.nth(0).click();
-    await expect(page.getByText('Week 1', { exact: false })).toBeVisible();
-    await expect(page.getByText('Beer Duty')).toBeVisible();
-    await expect(page.getByText('Top starter')).toBeVisible();
-  });
-
-  test('renders both brackets with bracket-relative placement labels', async ({ page }) => {
-    await page.getByRole('link', { name: 'Playoffs' }).click();
-
-    await expect(page.getByText('Championship bracket')).toBeVisible();
-    await expect(page.getByText('Championship', { exact: true })).toBeVisible();
-    await expect(page.getByText('3rd place game', { exact: true })).toBeVisible();
-
-    // The consolation bracket decides no league-wide championship.
-    await expect(page.getByText('Consolation bracket')).toBeVisible();
-    await expect(page.getByText('Consolation final')).toBeVisible();
-  });
-
-  test('lists every prior season', async ({ page }) => {
-    await page.getByRole('link', { name: 'History' }).click();
-
-    await expect(page.getByText('Season history')).toBeVisible();
-
-    // Scoped by the list's accessible name, because the season switcher in the
-    // header also links to a season by year.
-    const rows = page.getByRole('list', { name: 'Season history' }).getByRole('listitem');
-
-    // The chain walks back from 2025 to 2024 and stops, because
-    // previous_league_id is null on the oldest season.
-    await expect(rows).toHaveCount(2);
-    await expect(rows.first()).toContainText('2025');
-    await expect(rows.last()).toContainText('2024');
+    await expect(page.getByRole('heading', { name: 'Power rankings and luck' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lineup efficiency' })).toBeVisible();
+    await expect(page.getByText('Biggest blowout')).toBeVisible();
+    await expect(page.getByText('Longest win streak')).toBeVisible();
+    await expect(page.getByText('14 games')).toBeVisible();
   });
 });
 
-test.describe('a league with no games played', () => {
-  test('shows an empty state on every tab instead of an error', async ({ page }) => {
-    await page.goto(`/#/l/${PRE_DRAFT_LEAGUE_ID}/awards`);
+test.describe('all-time', () => {
+  test('tallies every manager across seasons', async ({ page }) => {
+    await page.goto('/#/all-time');
 
-    // `exact` matches the status badge, not the sentence in the empty state
-    // that now also says "pre-draft".
-    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
-    await expect(page.getByText('No games played yet')).toBeVisible();
-    await expect(page.getByText('This league is pre-draft.')).toBeVisible();
+    await expect(page.getByText('All-time standings', { exact: true }).first()).toBeVisible();
+    // The 2024 mock is the 2025 season again, so every manager has two years.
+    const rows = page.getByRole('table').getByRole('row');
+    await expect(rows).toHaveCount(13); // header plus 12 managers
+    await expect(rows.nth(1)).toContainText('28-0');
+  });
 
-    await page.getByRole('link', { name: 'Standings' }).click();
-    await expect(page.getByText('Standings open in week 1')).toBeVisible();
+  test('keeps a record book and a champions list', async ({ page }) => {
+    await page.goto('/#/all-time/records');
 
-    await page.getByRole('link', { name: 'Scoreboard' }).click();
-    await expect(page.getByText('No weeks played yet')).toBeVisible();
+    await expect(page.getByText('Champions', { exact: true })).toBeVisible();
+    const champions = page.getByRole('table').getByRole('row');
+    await expect(champions).toHaveCount(3); // header plus 2025 and 2024
+    await expect(champions.nth(1)).toContainText('2025');
+    await expect(champions.nth(1)).toContainText('redzone_rita');
 
-    // A league that has not drafted is told the season has not started, rather
-    // than being pointed at a playoff week that is months away.
-    await page.getByRole('link', { name: 'Playoffs' }).click();
-    await expect(page.getByText("The season hasn't started")).toBeVisible();
-    await expect(page.getByText('No playoff bracket yet')).toBeHidden();
+    await expect(page.getByText('Highest team week', { exact: true })).toBeVisible();
+    await expect(page.getByText('200.52 pts').first()).toBeVisible();
   });
 });
 
 test.describe('error handling', () => {
-  test('explains an unknown league id', async ({ page }) => {
-    await page.goto(`/#/l/${UNKNOWN_LEAGUE_ID}/awards`);
+  test('explains when Sleeper cannot be reached', async ({ page }) => {
+    await mockSleeper(page, { failCurrentLeague: true });
+    await page.goto('/');
 
-    await expect(page.getByText('League not found')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Back to search' })).toBeVisible();
+    await expect(page.getByText('Could not reach Sleeper')).toBeVisible({ timeout: 20_000 });
   });
 
-  test('sends an unknown route back to the landing page', async ({ page }) => {
-    await page.goto('/#/nonsense');
-    await expect(page.getByLabel('Sleeper league ID')).toBeVisible();
+  test('explains a year the league never played', async ({ page }) => {
+    await page.goto('/#/2019');
+    await expect(page.getByText('No 2019 season')).toBeVisible();
   });
-});
 
-test.describe('deep links', () => {
-  test('opens a tab directly from a pasted hash URL', async ({ page }) => {
-    await page.goto(`/#/l/${FINISHED_LEAGUE_ID}/playoffs`);
-
-    await expect(page.getByText('Final placings')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Playoffs' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+  test('sends an unknown route back to the newest season', async ({ page }) => {
+    await page.goto('/#/nonsense/path');
+    await expect(page).toHaveURL(/#\/$/);
   });
 });

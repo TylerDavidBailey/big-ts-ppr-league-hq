@@ -15,7 +15,7 @@ import { defineConfig } from 'vite';
  * Pages will serve. Everything that needs the prefix reads
  * `import.meta.env.BASE_URL` rather than hardcoding it.
  */
-const buildBase = process.env.VITE_BASE ?? '/sleeper-league-hq/';
+const buildBase = process.env.VITE_BASE ?? '/big-ts-ppr-league-hq/';
 
 export default defineConfig(({ command, isPreview }) => ({
   base: command === 'build' || isPreview ? buildBase : '/',

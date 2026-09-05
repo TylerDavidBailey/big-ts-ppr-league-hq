@@ -24,19 +24,5 @@ export function buildBracket(matches: SleeperBracketMatch[]): Bracket {
   return { matches, placements };
 }
 
-/** Rounds in display order, each holding its matches sorted by match number. */
-export function groupByRound(matches: SleeperBracketMatch[]): SleeperBracketMatch[][] {
-  const rounds = new Map<number, SleeperBracketMatch[]>();
-  for (const match of matches) {
-    const bucket = rounds.get(match.r);
-    if (bucket) bucket.push(match);
-    else rounds.set(match.r, [match]);
-  }
-
-  return [...rounds.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([, group]) => group.sort((a, b) => a.m - b.m));
-}
-
 export const placementFor = (bracket: Bracket, rosterId: number): number | null =>
   bracket.placements.find((placement) => placement.rosterId === rosterId)?.place ?? null;

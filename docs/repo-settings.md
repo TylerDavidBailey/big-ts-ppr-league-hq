@@ -6,7 +6,7 @@ Each step gives the web UI path and the equivalent [GitHub CLI](https://cli.gith
 command. Set `REPO` first:
 
 ```bash
-export REPO=TylerDavidBailey/sleeper-league-hq
+export REPO=TylerDavidBailey/big-ts-ppr-league-hq
 ```
 
 ## Turn on GitHub Pages
@@ -97,8 +97,8 @@ The description and topics are what people see when you share the link.
 
 ```bash
 gh repo edit "$REPO" \
-	--description "Standings, scoreboards, playoff brackets and season awards for any Sleeper fantasy football league." \
-	--homepage "https://tylerdavidbailey.github.io/sleeper-league-hq/" \
+	--description "Awards, payouts, standings and beer duty for Big-T's PPR League" \
+	--homepage "https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/" \
 	--add-topic fantasy-football \
 	--add-topic sleeper \
 	--add-topic react \

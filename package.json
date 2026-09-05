@@ -1,9 +1,9 @@
 {
-  "name": "sleeper-league-hq",
+  "name": "big-ts-ppr-league-hq",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A static dashboard for any Sleeper fantasy football league: standings, scoreboards, playoff brackets and season awards.",
+  "description": "Awards, payouts, standings and beer duty for Big-T's PPR League, read live from Sleeper.",
   "license": "MIT",
   "engines": {
     "node": ">=22"

@@ -16,20 +16,31 @@ export interface Team {
   /** Display names of any co-managers, excluding the primary owner. */
   coManagerNames: string[];
   avatarId: string | null;
-  /** Sleeper's own season totals, kept for cross-checking computed standings. */
+  /**
+   * Sleeper's own regular-season totals.
+   *
+   * Verified against the live API: `fpts` and `ppts` cover weeks 1 through
+   * `playoff_week_start - 1` only, so they line up with computed standings.
+   */
   reported: {
     wins: number;
     losses: number;
     ties: number;
     pointsFor: number;
     pointsAgainst: number;
+    /** The most a perfect lineup could have scored, from Sleeper's `ppts`. */
+    maxPointsFor: number;
   };
 }
 
-/** One starting-lineup slot in one week. */
-export interface StarterScore {
+/** One rostered player's score in one week. */
+export interface PlayerScore {
   playerId: string;
   points: number;
+}
+
+/** One starting-lineup slot in one week. */
+export interface StarterScore extends PlayerScore {
   /** Lineup slot index, so `roster_positions` can label it. */
   slot: number;
 }
@@ -44,6 +55,8 @@ export interface TeamWeek {
   opponentPoints: number | null;
   outcome: 'win' | 'loss' | 'tie' | 'none';
   starters: StarterScore[];
+  /** Every rostered player who did not start, from `players_points`. */
+  bench: PlayerScore[];
 }
 
 /** Every team's result for one week, plus what kind of week it was. */
@@ -138,6 +151,13 @@ export interface SeasonModel {
 
   /** True once at least one regular-season week has scores. */
   hasScores: boolean;
+  /**
+   * True once every regular-season week is settled.
+   *
+   * The 1 seed and the season's records are only final from this point; an
+   * all-time tally must not credit a mid-season leader with a title.
+   */
+  isRegularSeasonComplete: boolean;
   /** True when the league finished its playoffs. */
   isComplete: boolean;
 }

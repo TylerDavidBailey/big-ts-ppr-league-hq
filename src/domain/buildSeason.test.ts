@@ -60,6 +60,30 @@ describe('buildSeason', () => {
     }
   });
 
+  it('reads the perfect-lineup total from ppts', () => {
+    const roster = seasonFixture().rosters[0]!;
+    const team = season.teamsByRosterId.get(roster.roster_id)!;
+    const expected = (roster.settings.ppts ?? 0) + (roster.settings.ppts_decimal ?? 0) / 100;
+    expect(team.reported.maxPointsFor).toBeCloseTo(expected, 2);
+  });
+
+  it('puts every rostered player who did not start on the bench', () => {
+    const week1 = season.weeks.find((week) => week.week === 1)!;
+    const raw = seasonFixture().matchupsByWeek.get(1)!;
+
+    for (const team of week1.teams) {
+      const source = raw.find((matchup) => matchup.roster_id === team.rosterId)!;
+      const started = new Set(source.starters ?? []);
+      expect(team.bench).toHaveLength(
+        (source.players ?? []).filter((id) => !started.has(id)).length,
+      );
+      for (const benched of team.bench) {
+        expect(started.has(benched.playerId)).toBe(false);
+        expect(benched.points).toBeCloseTo(source.players_points?.[benched.playerId] ?? 0, 2);
+      }
+    }
+  });
+
   it('marks weeks with no matchup rows as unplayed', () => {
     const midSeason = buildSeason(seasonFixture({ matchupsByWeek: matchupsThrough(6) }));
 

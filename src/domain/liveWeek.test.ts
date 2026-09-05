@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { weeklyLowScorers } from './awards';
 import { buildSeason } from './buildSeason';
-import { resolveAwards } from './awards';
-import type { AwardWinner } from './awards';
 import { matchupsThrough, seasonFixture } from '@/test/fixtures';
 
 /**
@@ -41,6 +40,7 @@ describe('a week still being played', () => {
 
   it('counts only the four finished weeks', () => {
     expect(liveSeason().regularSeasonWeeks).toHaveLength(4);
+    expect(liveSeason().isRegularSeasonComplete).toBe(false);
   });
 
   it('is excluded from the settled weeks that decide records and awards', () => {
@@ -59,14 +59,11 @@ describe('a week still being played', () => {
     }
     // The same league with every week finished counts all 14.
     expect(final.standings[0]!.wins + final.standings[0]!.losses).toBe(14);
+    expect(final.isRegularSeasonComplete).toBe(true);
   });
 
   it('names no beer duty for the week in progress', () => {
-    const live = liveSeason();
-    const punishment = resolveAwards(live, { playerName: (id) => id }).find(
-      (award) => award.definition.id === 'weekly-punishment',
-    );
-    const weeks = (punishment?.result as AwardWinner[]).map((winner) => winner.week);
+    const weeks = weeklyLowScorers(liveSeason()).map((loser) => loser.week);
 
     expect(weeks).not.toContain(5);
     expect(weeks).toContain(4);

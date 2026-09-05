@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { computeSeasonAwards } from './awards';
 import { buildSeason } from './buildSeason';
-import { resolveAwards } from './awards';
-import type { AwardWinner } from './awards';
 import { seasonFixture } from '@/test/fixtures';
 import type { SleeperMatchup } from '@/lib/sleeper/types';
 
@@ -26,36 +25,34 @@ describe('ties', () => {
   }
 
   const awardsFor = (matchupsByWeek: Map<number, SleeperMatchup[]>) =>
-    resolveAwards(buildSeason({ ...fixture, matchupsByWeek }), context);
-
-  const winnersOf = (id: string, matchupsByWeek: Map<number, SleeperMatchup[]>): AwardWinner[] => {
-    const result = awardsFor(matchupsByWeek).find((award) => award.definition.id === id)?.result;
-    return Array.isArray(result) ? result : result ? [result] : [];
-  };
+    computeSeasonAwards(buildSeason({ ...fixture, matchupsByWeek }), context, 5);
 
   it('names every team tied for the highest week', () => {
     // Four rosters share the top score of 200.
-    const winners = winnersOf('highest-team-week', weekWithTiedScores(200));
+    const winners = awardsFor(weekWithTiedScores(200)).highestTeamWeek.filter(
+      (entry) => entry.place === 1,
+    );
 
     expect(winners).toHaveLength(4);
-    expect(winners.every((winner) => winner.value === 200)).toBe(true);
+    expect(winners.every((winner) => winner.value === 200 && winner.tied)).toBe(true);
     expect(new Set(winners.map((winner) => winner.rosterId)).size).toBe(4);
   });
 
   it('names every team tied for beer duty', () => {
     // Four rosters share the low score of 10.
-    const winners = winnersOf('weekly-punishment', weekWithTiedScores(10));
+    const losers = awardsFor(weekWithTiedScores(10)).beerDuty;
 
-    expect(winners).toHaveLength(4);
-    expect(winners.every((winner) => winner.value === 10)).toBe(true);
+    expect(losers).toHaveLength(4);
+    expect(losers.every((loser) => loser.value === 10 && loser.tied)).toBe(true);
   });
 
   it('returns a single winner when there is no tie', () => {
-    const result = awardsFor(fixture.matchupsByWeek as Map<number, SleeperMatchup[]>).find(
-      (award) => award.definition.id === 'highest-team-week',
-    )?.result;
+    const winners = awardsFor(
+      fixture.matchupsByWeek as Map<number, SleeperMatchup[]>,
+    ).highestTeamWeek.filter((entry) => entry.place === 1);
 
-    expect(Array.isArray(result)).toBe(false);
+    expect(winners).toHaveLength(1);
+    expect(winners[0]!.tied).toBe(false);
   });
 
   it('flags standings rows that are level on record and points', () => {
@@ -92,11 +89,9 @@ describe('ties', () => {
   it('names co-leaders for the 1 seed when the top of the table is tied', () => {
     // Every roster scores the same, so nobody separates from the field.
     const level = new Map([[1, week1.map((matchup) => ({ ...matchup, points: 100 }))]]);
-    const result = awardsFor(level).find(
-      (award) => award.definition.id === 'regular-season-champ',
-    )?.result;
+    const leaders = awardsFor(level).regularSeasonChamp.filter((entry) => entry.place === 1);
 
-    expect(Array.isArray(result)).toBe(true);
-    expect((result as AwardWinner[]).length).toBeGreaterThan(1);
+    expect(leaders.length).toBeGreaterThan(1);
+    expect(leaders.every((entry) => entry.tied)).toBe(true);
   });
 });

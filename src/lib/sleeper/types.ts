@@ -131,10 +131,3 @@ export interface SleeperNflState {
   league_season: string;
   season_start_date: string;
 }
-
-export interface SleeperUserSummary {
-  user_id: string;
-  username: string;
-  display_name: string;
-  avatar: string | null;
-}

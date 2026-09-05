@@ -1,4 +1,4 @@
-# Sleeper League HQ
+# Big-T's PPR League HQ
 #
 # Run `make` on its own for the task list.
 # Everything here assumes Node 22+ (see .nvmrc). Nothing needs Docker or a
@@ -22,9 +22,9 @@ PREVIEW_LOG  := $(RUN_DIR)/preview.log
 # The dev server runs at the root; `vite preview` mirrors the GitHub Pages
 # sub-path so a preview catches base-path mistakes before deploy.
 DEV_URL      := http://localhost:$(DEV_PORT)/
-PREVIEW_URL  := http://localhost:$(PREVIEW_PORT)/sleeper-league-hq/
+PREVIEW_URL  := http://localhost:$(PREVIEW_PORT)/big-ts-ppr-league-hq/
 
-# A league with four seasons of real data, handy for a quick smoke test.
+# The league itself. The site is hardcoded to it in src/league.config.ts.
 SAMPLE_LEAGUE ?= 1373305494734651392
 
 # --- Pretty output -----------------------------------------------------------
@@ -47,7 +47,7 @@ endef
 
 .PHONY: help
 help: ## Show this help
-	@printf "\n  $(BOLD)Sleeper League HQ$(RESET)\n"
+	@printf "\n  $(BOLD)Big-T'"'"'s PPR League HQ$(RESET)\n"
 	@printf "  $(DIM)make <target>$(RESET)\n\n"
 	@awk 'BEGIN { FS = ":.*##" } \
 		/^## ---/ { section = $$0; sub(/^## -+ */, "", section); sub(/ *-+ *##$$/, "", section); \
@@ -93,7 +93,7 @@ up: install ## Start the dev server in the background
 	done; \
 	if curl -sf -o /dev/null "$(DEV_URL)"; then \
 		printf "$(GREEN)✓$(RESET) $(DEV_URL)\n"; \
-		printf "  $(DIM)Sample league: $(DEV_URL)#/l/$(SAMPLE_LEAGUE)$(RESET)\n"; \
+		printf "  $(DIM)Last season: $(DEV_URL)#/2025$(RESET)\n"; \
 		printf "  $(DIM)Logs: make logs   Stop: make down$(RESET)\n"; \
 	else \
 		printf "Dev server did not come up. Last output:\n"; tail -20 $(DEV_LOG); \

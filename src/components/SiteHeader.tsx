@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { LEAGUE } from '@/league.config';
+
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/85 backdrop-blur-md">
@@ -9,12 +11,12 @@ export function SiteHeader() {
             🏈
           </span>
           <span className="font-display text-sm font-bold uppercase tracking-[0.16em] text-ink">
-            Sleeper League <span className="text-brand">HQ</span>
+            {LEAGUE.name} <span className="text-brand">HQ</span>
           </span>
         </Link>
 
         <a
-          href="https://github.com/TylerDavidBailey/sleeper-league-hq"
+          href={LEAGUE.repoUrl}
           target="_blank"
           rel="noreferrer noopener"
           className="text-xs font-semibold text-ink-dim transition hover:text-brand"

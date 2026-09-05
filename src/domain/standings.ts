@@ -20,7 +20,7 @@ function compareRows(a: StandingsRow, b: StandingsRow): number {
 }
 
 /** Level on both record and points, so their relative order means nothing. */
-const isLevel = (a: StandingsRow, b: StandingsRow): boolean =>
+export const isLevel = (a: StandingsRow, b: StandingsRow): boolean =>
   a.wins + a.ties * 0.5 === b.wins + b.ties * 0.5 && a.pointsFor === b.pointsFor;
 
 function trailingStreak(form: StandingsRow['form']): StandingsRow['streak'] {
