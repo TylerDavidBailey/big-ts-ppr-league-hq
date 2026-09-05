@@ -1,4 +1,6 @@
-import { LeagueIdForm } from './LeagueIdForm';
+import { Link } from 'react-router-dom';
+
+import { EXAMPLE_LEAGUE_ID, LeagueIdForm } from './LeagueIdForm';
 import { RecentLeagues } from './RecentLeagues';
 import { UsernameLookup } from './UsernameLookup';
 
@@ -34,6 +36,17 @@ export function LandingPage() {
       <div className="mt-10">
         <LeagueIdForm />
       </div>
+
+      <p className="mt-4 text-center text-sm text-ink-dim">
+        Haven&apos;t got an ID handy?{' '}
+        <Link
+          to={`/l/${EXAMPLE_LEAGUE_ID}/awards`}
+          className="font-semibold text-brand underline-offset-4 hover:underline"
+        >
+          Look at an example league
+        </Link>
+        .
+      </p>
 
       <div className="mt-10 space-y-8">
         <RecentLeagues />

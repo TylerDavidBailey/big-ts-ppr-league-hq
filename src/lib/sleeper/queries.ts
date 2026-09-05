@@ -28,6 +28,7 @@ import { rememberChain, resolveChainHead } from '@/lib/storage';
 /** Completed seasons never change; live ones are refetched on a short leash. */
 const FOREVER = Number.POSITIVE_INFINITY;
 const FIVE_MINUTES = 5 * 60 * 1000;
+const TWO_MINUTES = 2 * 60 * 1000;
 
 export const queryKeys = {
   nflState: () => ['nfl-state'] as const,
@@ -57,6 +58,15 @@ function requireId(value: string | undefined, name: string): string {
 
 const staleTimeFor = (league: SleeperLeague | undefined) =>
   league?.status === 'complete' ? FOREVER : FIVE_MINUTES;
+
+/**
+ * Poll a live league so scores move without a reload.
+ *
+ * A finished season never changes, so it is never polled. `false` is what
+ * TanStack Query expects to mean "do not poll".
+ */
+const refetchIntervalFor = (league: SleeperLeague | undefined): number | false =>
+  league?.status === 'in_season' ? TWO_MINUTES : false;
 
 export const useNflState = () =>
   useQuery({
@@ -155,8 +165,9 @@ export const useLosersBracket = (leagueId: string | undefined, league?: SleeperL
 /**
  * Fetch every week of the season in parallel.
  *
- * The range runs from week 1 through the end of the playoffs, capped at the
- * NFL's 18 weeks. Unplayed weeks come back as `[]`, which `buildSeason` reads
+ * The range runs from week 1 through the end of this league's playoffs, which
+ * `lastWeekOfSeason` derives from its own settings. Unplayed weeks come back as
+ * `[]`, which `buildSeason` reads
  * as "not played", so there is nothing to skip and no need to know the current
  * week ahead of time.
  */
@@ -175,6 +186,7 @@ export function useSeasonMatchups(
         getMatchups(requireId(leagueId, 'leagueId'), week, signal),
       enabled: Boolean(leagueId) && Boolean(league),
       staleTime: staleTimeFor(league),
+      refetchInterval: refetchIntervalFor(league),
     })),
   });
 }

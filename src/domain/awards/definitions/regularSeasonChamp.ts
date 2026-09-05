@@ -1,10 +1,12 @@
-import type { AwardDefinition } from '../types';
+import type { AwardDefinition, AwardWinner } from '../types';
 
 /**
  * The 1 seed: whoever tops the computed regular-season standings.
  *
- * Standings already apply Sleeper's tiebreak (record, then points for), so this
- * is just the head of that list.
+ * Standings already apply the record-then-points-scored order, so this is the
+ * head of that list. When the leader is level with another team on both, both
+ * are named: the sort order between them is arbitrary and the league has a real
+ * tie to settle its own way.
  */
 export const regularSeasonChamp: AwardDefinition = {
   id: 'regular-season-champ',
@@ -18,10 +20,19 @@ export const regularSeasonChamp: AwardDefinition = {
     const leader = season.standings[0];
     if (!leader) return null;
 
-    return {
-      rosterId: leader.rosterId,
-      value: leader.pointsFor,
-      detail: `${leader.wins}-${leader.losses}${leader.ties > 0 ? `-${leader.ties}` : ''}`,
-    };
+    const asWinner = (row: (typeof season.standings)[number]): AwardWinner => ({
+      rosterId: row.rosterId,
+      value: row.pointsFor,
+      detail: `${row.wins}-${row.losses}${row.ties > 0 ? `-${row.ties}` : ''}`,
+    });
+
+    if (!leader.tied) return asWinner(leader);
+
+    const coLeaders = season.standings.filter(
+      (row) =>
+        row.wins + row.ties * 0.5 === leader.wins + leader.ties * 0.5 &&
+        row.pointsFor === leader.pointsFor,
+    );
+    return coLeaders.map(asWinner);
   },
 };

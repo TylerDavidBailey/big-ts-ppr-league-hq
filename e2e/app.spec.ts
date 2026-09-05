@@ -31,6 +31,13 @@ test.describe('landing page', () => {
     await expect(page).toHaveURL(new RegExp(`#/l/${FINISHED_LEAGUE_ID}`));
   });
 
+  test('offers an example league to someone with no id', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Look at an example league' }).click();
+
+    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
+  });
+
   test('rejects an id that is not a league id', async ({ page }) => {
     await page.goto('/');
     await page.getByLabel('Sleeper league ID').fill('not-a-league');

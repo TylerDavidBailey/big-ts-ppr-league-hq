@@ -27,7 +27,11 @@ function FormStrip({ form }: { form: StandingsRow['form'] }) {
             OUTCOME_TONE[outcome],
           )}
         >
-          {outcome[0]}
+          <span aria-hidden>{outcome[0]}</span>
+          {/* `title` is invisible to keyboard and screen reader users. */}
+          <span className="sr-only">
+            Week {form.length - recent.length + index + 1}: {outcome}
+          </span>
         </span>
       ))}
     </span>
@@ -50,7 +54,7 @@ export function StandingsTab({ season }: { season: SeasonModel }) {
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[42rem] border-collapse text-sm">
+        <table className="w-full min-w-[22rem] border-collapse text-sm sm:min-w-[42rem]">
           <caption className="sr-only">
             {season.season} regular-season standings through week {season.regularSeasonEndWeek}
           </caption>
@@ -68,13 +72,13 @@ export function StandingsTab({ season }: { season: SeasonModel }) {
               <th scope="col" className="px-3 py-3 text-right font-semibold">
                 PF
               </th>
-              <th scope="col" className="px-3 py-3 text-right font-semibold">
+              <th scope="col" className="hidden px-3 py-3 text-right font-semibold sm:table-cell">
                 PA
               </th>
-              <th scope="col" className="px-3 py-3 text-right font-semibold">
+              <th scope="col" className="hidden px-3 py-3 text-right font-semibold sm:table-cell">
                 Streak
               </th>
-              <th scope="col" className="px-4 py-3 font-semibold">
+              <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">
                 Form
               </th>
             </tr>
@@ -114,10 +118,10 @@ export function StandingsTab({ season }: { season: SeasonModel }) {
                   <td className="px-3 py-3 text-right tabular text-ink-muted">
                     {formatPoints(row.pointsFor)}
                   </td>
-                  <td className="px-3 py-3 text-right tabular text-ink-dim">
+                  <td className="hidden px-3 py-3 text-right tabular text-ink-dim sm:table-cell">
                     {formatPoints(row.pointsAgainst)}
                   </td>
-                  <td className="px-3 py-3 text-right">
+                  <td className="hidden px-3 py-3 text-right sm:table-cell">
                     {row.streak ? (
                       <span
                         className={cn(
@@ -132,7 +136,7 @@ export function StandingsTab({ season }: { season: SeasonModel }) {
                       <span className="text-ink-dim">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 md:table-cell">
                     <FormStrip form={row.form} />
                   </td>
                 </tr>

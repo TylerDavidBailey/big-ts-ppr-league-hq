@@ -14,7 +14,8 @@ Every response carries `access-control-allow-origin: *`, so the browser calls it
 The app has no backend and no proxy.
 
 Sleeper asks callers to stay under 1000 requests per minute. One full season costs about
-23 requests.
+24 requests, or 28 for a league whose playoff rounds run two weeks, plus one request per
+prior season when walking the chain.
 
 ## Endpoints the app uses
 
@@ -97,7 +98,7 @@ Each season is a separate league with its own id. `previous_league_id` points at
 season and is `null` on the first one.
 
 The reference league chains 2026 to 2025 to 2024 to 2023. `getLeagueChain` walks the chain
-with a visited set and a 30-season cap, so bad data cannot loop forever.
+with a visited set and a 60-season cycle guard, so bad data cannot loop forever.
 
 ### `/players/nfl` is 14.6 MB
 

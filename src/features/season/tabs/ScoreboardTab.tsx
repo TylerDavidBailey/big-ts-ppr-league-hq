@@ -65,7 +65,9 @@ export function ScoreboardTab({
   const punishment = useMemo(() => {
     const award = awards.find((candidate) => candidate.definition.id === 'weekly-punishment');
     const results = Array.isArray(award?.result) ? award.result : [];
-    return { award, winner: results.find((result) => result.week === week?.week) };
+    // Several rosters can share the low score, and a week still in progress has
+    // no entry at all because the award only reads settled weeks.
+    return { award, winners: results.filter((result) => result.week === week?.week) };
   }, [awards, week?.week]);
 
   const topStarter = useMemo(() => {
@@ -129,8 +131,14 @@ export function ScoreboardTab({
               Week {week.week}
               {week.phase === 'postseason' ? ' · Playoffs' : ''}
             </CardTitle>
-            <Badge tone={week.phase === 'postseason' ? 'gold' : 'neutral'}>
-              {week.phase === 'postseason' ? 'Postseason' : 'Regular season'}
+            <Badge
+              tone={week.provisional ? 'purple' : week.phase === 'postseason' ? 'gold' : 'neutral'}
+            >
+              {week.provisional
+                ? 'In progress'
+                : week.phase === 'postseason'
+                  ? 'Postseason'
+                  : 'Regular season'}
             </Badge>
           </CardHeader>
           <CardBody className="space-y-2.5">
@@ -156,7 +164,25 @@ export function ScoreboardTab({
         </Card>
 
         <div className="space-y-4">
-          {punishment.winner && week.phase === 'regular' ? (
+          {week.provisional && week.phase === 'regular' ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <span aria-hidden className="mr-2 text-base">
+                    🍺
+                  </span>
+                  Beer Duty
+                </CardTitle>
+                <Badge tone="purple">Pending</Badge>
+              </CardHeader>
+              <CardBody>
+                <p className="text-sm text-ink-dim">
+                  Week {week.week} is still being played. Beer duty is decided once every game is
+                  final.
+                </p>
+              </CardBody>
+            </Card>
+          ) : punishment.winners.length > 0 && week.phase === 'regular' ? (
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -165,17 +191,22 @@ export function ScoreboardTab({
                   </span>
                   {punishment.award?.definition.name}
                 </CardTitle>
+                {punishment.winners.length > 1 ? <Badge tone="purple">Tied</Badge> : null}
               </CardHeader>
               <CardBody className="space-y-3">
-                <TeamChip
-                  team={season.teamsByRosterId.get(punishment.winner.rosterId)}
-                  showManager
-                  size="lg"
-                />
+                {punishment.winners.map((loser) => (
+                  <TeamChip
+                    key={loser.rosterId}
+                    team={season.teamsByRosterId.get(loser.rosterId)}
+                    showManager
+                    size={punishment.winners.length > 1 ? 'md' : 'lg'}
+                  />
+                ))}
                 <p className="font-display text-3xl font-bold tabular text-loss">
-                  {formatPoints(punishment.winner.value)}
+                  {formatPoints(punishment.winners[0]?.value ?? 0)}
                 </p>
                 <p className="border-t border-hairline pt-3 text-xs text-ink-dim">
+                  {punishment.winners.length > 1 ? 'Tied for lowest, so everyone drinks. ' : ''}
                   {punishment.award?.definition.description}
                 </p>
               </CardBody>

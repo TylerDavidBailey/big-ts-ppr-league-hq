@@ -83,7 +83,9 @@ The `SeasonModel`, defined in `src/domain/types.ts`. The parts you'll reach for:
 
 | Field                       | What it holds                                                                  |
 | --------------------------- | ------------------------------------------------------------------------------ |
-| `regularSeasonWeeks`        | Played weeks 1..`regularSeasonEndWeek`, each with every team's result          |
+| `regularSeasonWeeks`        | Settled weeks 1..`regularSeasonEndWeek`, each with every team's result         |
+| `liveWeek`                  | The week being played right now, or `null`                                     |
+| `usesMedianScoring`         | True when records come from Sleeper rather than from matchups                  |
 | `weeks`                     | Every week including the playoffs, with a `phase` of `regular` or `postseason` |
 | `standings`                 | Ranked rows with wins, losses, points for and against, form, streak            |
 | `teams` / `teamsByRosterId` | Team names, manager handles, avatars                                           |

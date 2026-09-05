@@ -6,7 +6,7 @@
  * layer testable from captured JSON fixtures.
  */
 import { buildBracket } from './bracket';
-import { computeStandings, round2 } from './standings';
+import { computeStandings, round2, standingsFromReported } from './standings';
 import type { SeasonModel, StarterScore, Team, TeamWeek, Week } from './types';
 import type {
   SleeperBracketMatch,
@@ -59,6 +59,16 @@ export interface RawSeasonData {
   matchupsByWeek: ReadonlyMap<number, SleeperMatchup[]>;
   winnersBracket: SleeperBracketMatch[];
   losersBracket: SleeperBracketMatch[];
+  /**
+   * The NFL's current season and week, from `/state/nfl`.
+   *
+   * Without it a week that is halfway through Sunday looks identical to a
+   * finished one, so a team that has not kicked off yet sits on 0.00 and gets
+   * handed a loss and the weekly punishment. Omit it only when the clock is
+   * genuinely unknown; the week is then treated as final, which is the old
+   * behaviour.
+   */
+  nflState?: { season: string; week: number } | null;
 }
 
 /** Sleeper splits points into whole and hundredths parts. */
@@ -71,7 +81,17 @@ function buildTeams(rosters: SleeperRoster[], users: SleeperUser[]): Team[] {
   return rosters
     .map((roster): Team => {
       const user = roster.owner_id ? usersById.get(roster.owner_id) : undefined;
-      const managerName = user?.display_name ?? 'Unclaimed team';
+      const ownerName = user?.display_name ?? 'Unclaimed team';
+
+      // A co-managed roster names everyone, so a team is not credited to one
+      // half of a partnership. Sleeper lists the primary owner in `co_owners`
+      // on some leagues, so it is filtered out rather than repeated.
+      const coManagerNames = (roster.co_owners ?? [])
+        .filter((id) => id !== roster.owner_id)
+        .map((id) => usersById.get(id)?.display_name)
+        .filter((name): name is string => Boolean(name));
+
+      const managerName = [ownerName, ...coManagerNames].join(' & ');
       // `metadata.team_name` is often absent; the manager's handle is the fallback
       // Sleeper itself shows.
       const teamName = roster.metadata?.team_name?.trim() || managerName;
@@ -80,6 +100,7 @@ function buildTeams(rosters: SleeperRoster[], users: SleeperUser[]): Team[] {
         rosterId: roster.roster_id,
         name: teamName,
         managerName,
+        coManagerNames,
         userId: roster.owner_id,
         avatarId: user?.avatar ?? null,
         reported: {
@@ -105,11 +126,16 @@ function buildStarters(matchup: SleeperMatchup): StarterScore[] {
   });
 }
 
-function buildWeek(week: number, matchups: SleeperMatchup[], playoffWeekStart: number): Week {
+function buildWeek(
+  week: number,
+  matchups: SleeperMatchup[],
+  playoffWeekStart: number,
+  inProgress: boolean,
+): Week {
   const phase = week >= playoffWeekStart ? 'postseason' : 'regular';
 
   if (matchups.length === 0) {
-    return { week, phase, played: false, teams: [] };
+    return { week, phase, played: false, provisional: false, teams: [] };
   }
 
   // Rosters sharing a matchup_id played each other.
@@ -167,7 +193,25 @@ function buildWeek(week: number, matchups: SleeperMatchup[], playoffWeekStart: n
   const played =
     teams.some((team) => team.points > 0) && teams.some((team) => team.opponentRosterId !== null);
 
-  return { week, phase, played, teams: teams.sort((a, b) => a.rosterId - b.rosterId) };
+  return {
+    week,
+    phase,
+    played,
+    // Scores are still moving, so this week decides nothing yet.
+    provisional: played && inProgress,
+    teams: teams.sort((a, b) => a.rosterId - b.rosterId),
+  };
+}
+
+/**
+ * The week currently being played, if this league's season is the live one.
+ *
+ * A past season has no week in progress, however long ago it ended.
+ */
+function inProgressWeek(league: SleeperLeague, nflState: RawSeasonData['nflState']): number | null {
+  if (!nflState) return null;
+  if (league.season !== nflState.season) return null;
+  return nflState.week;
 }
 
 export function buildSeason(raw: RawSeasonData): SeasonModel {
@@ -175,14 +219,25 @@ export function buildSeason(raw: RawSeasonData): SeasonModel {
 
   const playoffWeekStart = league.settings.playoff_week_start ?? DEFAULT_PLAYOFF_WEEK_START;
   const regularSeasonEndWeek = Math.max(1, playoffWeekStart - 1);
+  const liveWeek = inProgressWeek(league, raw.nflState);
 
   const teams = buildTeams(rosters, users);
   const weeks = [...matchupsByWeek.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([week, matchups]) => buildWeek(week, matchups, playoffWeekStart));
+    .map(([week, matchups]) => buildWeek(week, matchups, playoffWeekStart, week === liveWeek));
 
   const regularSeasonWeeks = weeks.filter((week) => week.week <= regularSeasonEndWeek);
-  const standings = computeStandings(teams, regularSeasonWeeks);
+  // Standings and awards read settled weeks only. A week still being played
+  // would otherwise hand out a record and a punishment on partial scores.
+  const settledRegularSeasonWeeks = regularSeasonWeeks.filter(
+    (week) => week.played && !week.provisional,
+  );
+  // A median league scores two results a week, one head-to-head and one against
+  // the league median, and the median result is absent from the matchup data.
+  const usesMedianScoring = league.settings.league_average_match === 1;
+  const standings = usesMedianScoring
+    ? standingsFromReported(teams, settledRegularSeasonWeeks)
+    : computeStandings(teams, settledRegularSeasonWeeks);
   const winners = buildBracket(winnersBracket);
 
   return {
@@ -201,13 +256,15 @@ export function buildSeason(raw: RawSeasonData): SeasonModel {
     playoffTeams: league.settings.playoff_teams ?? 0,
 
     weeks,
-    regularSeasonWeeks: regularSeasonWeeks.filter((week) => week.played),
+    regularSeasonWeeks: settledRegularSeasonWeeks,
+    liveWeek,
 
     standings,
     winnersBracket: winners,
     losersBracket: buildBracket(losersBracket),
 
-    hasScores: regularSeasonWeeks.some((week) => week.played),
+    usesMedianScoring,
+    hasScores: settledRegularSeasonWeeks.length > 0,
     isComplete: winners.placements.some((placement) => placement.place === 1),
   };
 }

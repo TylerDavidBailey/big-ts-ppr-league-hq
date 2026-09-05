@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 
 import { isValidLeagueId } from '@/lib/format';
 
+/**
+ * A public league to show someone who arrived without an ID of their own.
+ *
+ * Without a way in, a visitor with no ID handy has nothing to look at and
+ * leaves. League data is public, so linking one costs nothing.
+ */
+export const EXAMPLE_LEAGUE_ID = '1252998165817208832';
+
 /** Sleeper league URLs look like https://sleeper.com/leagues/1234567890/team */
 function extractLeagueId(input: string): string {
   const trimmed = input.trim();
@@ -67,7 +75,7 @@ export function LeagueIdForm() {
         <p id="league-id-hint" className="mt-2.5 text-sm text-ink-dim">
           Find it in your Sleeper league URL:{' '}
           <span className="font-mono text-ink-muted">sleeper.com/leagues/</span>
-          <span className="font-mono text-brand">1373305494734651392</span>
+          <span className="font-mono text-brand">{EXAMPLE_LEAGUE_ID}</span>
         </p>
       )}
     </form>

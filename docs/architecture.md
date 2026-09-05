@@ -80,9 +80,10 @@ already cached.
 `staleTime` is `Infinity` for a league whose `status` is `complete`, because a finished
 season never changes. Live leagues get five minutes.
 
-The app requests every week from 1 through `playoffWeekStart + 3`, capped at 18. Unplayed
-weeks cost one cheap `[]` response each, which is simpler than tracking the current week and
-costs about 23 requests per season against a 1000-per-minute budget.
+The app requests every week from 1 through the end of the league's playoffs, computed by
+`lastWeekOfSeason()` from `playoff_week_start` and `playoff_round_type`. Unplayed weeks cost
+one cheap `[]` response each, which is simpler than tracking the current week and costs
+about 24 requests per season against a 1000-per-minute budget.
 
 ## Player names come from a committed file
 
