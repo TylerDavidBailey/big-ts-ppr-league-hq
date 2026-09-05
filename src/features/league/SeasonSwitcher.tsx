@@ -1,4 +1,12 @@
-import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
+import {
+  type FocusEvent,
+  type KeyboardEvent,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { seasonSectionSuffix } from '../season/sections';
@@ -68,8 +76,9 @@ export function SeasonSwitcher({ chain, loading }: { chain: SleeperLeague[]; loa
   }, [open]);
 
   // Opening lands focus on the season you are already reading, or on the last
-  // row when the panel was opened upwards.
-  useEffect(() => {
+  // row when the panel was opened upwards. Laid out before paint, so focus is
+  // never briefly observable on the button the panel was opened from.
+  useLayoutEffect(() => {
     if (!open) return;
     const rows = [...(panelRef.current?.querySelectorAll('a') ?? [])];
     const active = rows.find((row) => row.getAttribute('aria-current') === 'page');
