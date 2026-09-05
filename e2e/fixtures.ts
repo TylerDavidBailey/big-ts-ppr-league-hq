@@ -16,8 +16,12 @@ import winnersBracket from '../src/test/fixtures/winnersBracket.json' with { typ
 
 /** The finished 2025 season the fixtures were captured from. */
 export const FINISHED_LEAGUE_ID = league.league_id;
-/** The 2026 season, served as pre-draft so the empty states can be tested. */
-export const PRE_DRAFT_LEAGUE_ID = '1373305494734651392';
+/**
+ * The 2026 season, served as pre-draft so the empty states can be tested.
+ *
+ * Synthetic, in the shape of a Sleeper id, to match the anonymised fixtures.
+ */
+export const PRE_DRAFT_LEAGUE_ID = '8000000000000000003';
 /** The 2024 season, which ends the chain. Taken from the fixture's own link. */
 export const OLDEST_LEAGUE_ID = league.previous_league_id;
 export const UNKNOWN_LEAGUE_ID = '12345';

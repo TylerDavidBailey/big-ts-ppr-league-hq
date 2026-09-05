@@ -68,13 +68,15 @@ export const getUserLeagues = (userId: string, season: string, signal?: AbortSig
 /**
  * Walk `previous_league_id` back through every prior season of a league.
  *
- * Most recent season first. The chain is bounded to guard against a cycle in
- * bad league data; no real league approaches the limit.
+ * Most recent season first. `maxSeasons` is a cycle guard rather than a real
+ * limit: a `seen` set already stops a loop, and this caps the damage if Sleeper
+ * ever returns a chain that grows without repeating. Sleeper launched in 2017,
+ * so the ceiling is decades of headroom.
  */
 export async function getLeagueChain(
   leagueId: string,
   signal?: AbortSignal,
-  maxSeasons = 30,
+  maxSeasons = 60,
 ): Promise<SleeperLeague[]> {
   const chain: SleeperLeague[] = [];
   const seen = new Set<string>();

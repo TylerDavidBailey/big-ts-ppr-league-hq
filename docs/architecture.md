@@ -15,7 +15,9 @@ That boundary buys two things.
 
 The league logic is testable without a network or a browser. `scripts/capture-fixtures.mjs`
 saved the real responses from a finished 12-team season into `src/test/fixtures/`, and the
-tests assert against actual numbers. `src/domain/standings.test.ts` checks that computed
+tests assert against actual numbers. `scripts/anonymize-fixtures.mjs` swaps the handles,
+user ids, avatars, and league name for synthetic ones before anything is written, so the
+repo carries real scores without carrying real people. `src/domain/standings.test.ts` checks that computed
 wins, losses, and points match what Sleeper itself reports for all 12 rosters, and that the
 computed form strip matches the `metadata.record` string character for character. A
 mistake in the pairing logic fails that test immediately.
