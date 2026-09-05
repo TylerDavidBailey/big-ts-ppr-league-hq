@@ -122,6 +122,14 @@ export interface SeasonModel {
   /** Last week of the regular season, i.e. `playoff_week_start - 1`. */
   regularSeasonEndWeek: number;
   playoffWeekStart: number;
+  /**
+   * Championship week, derived from the bracket size and the round length.
+   *
+   * Read from the league's settings, so a season with no games played yet still
+   * reports the span its playoffs will run. Equals `playoffWeekStart` when the
+   * bracket size is unknown.
+   */
+  playoffEndWeek: number;
   playoffTeams: number;
 
   weeks: Week[];

@@ -16,6 +16,9 @@ describe('buildSeason', () => {
     // Regular season is weeks 1-14 for this league; the rule is derived, not hardcoded.
     expect(season.regularSeasonEndWeek).toBe(14);
     expect(season.teams).toHaveLength(12);
+    // Six teams from week 15 play three rounds, so the bracket ends in week 17.
+    expect(season.playoffTeams).toBe(6);
+    expect(season.playoffEndWeek).toBe(17);
   });
 
   it('names teams, falling back to the manager handle when team_name is absent', () => {
@@ -185,6 +188,24 @@ describe('buildSeason resilience', () => {
 
     expect(noPlayoffWeek.playoffWeekStart).toBe(15);
     expect(noPlayoffWeek.regularSeasonEndWeek).toBe(14);
+    // With no bracket size there is nothing to span, so the end week stays put
+    // rather than inventing rounds.
+    expect(noPlayoffWeek.playoffEndWeek).toBe(15);
+  });
+
+  it('reports the playoff span for a season with no games played', () => {
+    const fixture = seasonFixture();
+    const preDraft = buildSeason({
+      ...fixture,
+      league: { ...fixture.league, status: 'pre_draft' },
+      matchupsByWeek: new Map(),
+      winnersBracket: [],
+      losersBracket: [],
+    });
+
+    expect(preDraft.weeks).toHaveLength(0);
+    expect(preDraft.playoffWeekStart).toBe(15);
+    expect(preDraft.playoffEndWeek).toBe(17);
   });
 
   it('names an unclaimed roster rather than rendering a blank', () => {
