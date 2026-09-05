@@ -18,7 +18,7 @@ test.describe('landing page', () => {
     await page.getByRole('button', { name: 'Load league' }).click();
 
     await expect(page).toHaveURL(new RegExp(`#/l/${FINISHED_LEAGUE_ID}`));
-    await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
   });
 
   test('loads a league from a pasted Sleeper URL', async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe('landing page', () => {
 
   test('remembers a league across a browser restart', async ({ page, context }) => {
     await page.goto(`/#/l/${FINISHED_LEAGUE_ID}/awards`);
-    await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
 
     // A new page in the same context is the same browser profile, so this
     // exercises the localStorage round-trip rather than in-memory state.
@@ -52,7 +52,7 @@ test.describe('landing page', () => {
 
     const recent = revisit.getByRole('heading', { name: 'Recent leagues' });
     await expect(recent).toBeVisible();
-    await expect(revisit.getByRole('link', { name: /Big-T's PPR League/ }).first()).toBeVisible();
+    await expect(revisit.getByRole('link', { name: /The Sunday Scaries/ }).first()).toBeVisible();
 
     // The remove button empties the list again.
     await revisit
@@ -66,12 +66,12 @@ test.describe('landing page', () => {
 test.describe('a finished season', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`/#/l/${FINISHED_LEAGUE_ID}/awards`);
-    await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'The Sunday Scaries' })).toBeVisible();
   });
 
   test('names the podium from the bracket placement games', async ({ page }) => {
     const podium = page.getByRole('listitem').filter({ hasText: 'Champion' });
-    await expect(podium).toContainText('Bigdogbetz');
+    await expect(podium).toContainText('redzone_rita');
 
     await expect(page.getByText('Runner-up')).toBeVisible();
     await expect(page.getByText('Third place')).toBeVisible();
@@ -105,7 +105,7 @@ test.describe('a finished season', () => {
     await page.getByRole('link', { name: 'Standings' }).click();
 
     const leader = page.getByRole('row').nth(1);
-    await expect(leader).toContainText('jaredn46');
+    await expect(leader).toContainText('HailMaryHank');
     await expect(leader).toContainText('14-0');
     await expect(leader).toContainText('2,237.72');
 
@@ -173,8 +173,11 @@ test.describe('a league with no games played', () => {
     await page.getByRole('link', { name: 'Scoreboard' }).click();
     await expect(page.getByText('No weeks played yet')).toBeVisible();
 
+    // A league that has not drafted is told the season has not started, rather
+    // than being pointed at a playoff week that is months away.
     await page.getByRole('link', { name: 'Playoffs' }).click();
-    await expect(page.getByText('No playoff bracket yet')).toBeVisible();
+    await expect(page.getByText("The season hasn't started")).toBeVisible();
+    await expect(page.getByText('No playoff bracket yet')).toBeHidden();
   });
 });
 

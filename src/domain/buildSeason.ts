@@ -18,8 +18,38 @@ import type {
 
 /** Sleeper's default when a league somehow reports no playoff start. */
 const DEFAULT_PLAYOFF_WEEK_START = 15;
-/** Regular season plus a generous postseason; weeks past this never exist. */
-export const MAX_NFL_WEEK = 18;
+
+/**
+ * Hard ceiling on how many weeks the app will ever ask for.
+ *
+ * This is a loop guard, not the NFL's schedule. The real end of a season comes
+ * from the league's own `playoff_week_start` plus its playoff rounds, so the
+ * app already follows a league that runs long. The ceiling only stops a corrupt
+ * `playoff_week_start` from generating unbounded requests, and it has room for
+ * a longer regular season than the NFL currently plays.
+ */
+export const MAX_SEASON_WEEK = 25;
+
+/** A 16-team bracket, which is the largest Sleeper offers. */
+export const MAX_PLAYOFF_ROUNDS = 4;
+
+/**
+ * Weeks each playoff round occupies.
+ *
+ * Sleeper's `playoff_round_type` is 2 when every round runs over two weeks.
+ * Missing the doubling would cut a two-week championship off the scoreboard.
+ */
+export const weeksPerPlayoffRound = (playoffRoundType: number | undefined): number =>
+  playoffRoundType === 2 ? 2 : 1;
+
+/** Last week worth requesting for a league. Unplayed weeks answer `[]` cheaply. */
+export function lastWeekOfSeason(
+  playoffWeekStart: number,
+  playoffRoundType: number | undefined,
+): number {
+  const playoffWeeks = MAX_PLAYOFF_ROUNDS * weeksPerPlayoffRound(playoffRoundType);
+  return Math.min(MAX_SEASON_WEEK, playoffWeekStart + playoffWeeks);
+}
 
 export interface RawSeasonData {
   league: SleeperLeague;

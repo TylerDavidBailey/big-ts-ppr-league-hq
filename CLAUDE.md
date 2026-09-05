@@ -87,8 +87,12 @@ that every view and every award reads.
 Vitest with jsdom. Tests sit next to the code as `*.test.ts`.
 
 Fixtures in `src/test/fixtures/` are real Sleeper responses from a finished 12-team season,
-captured by `scripts/capture-fixtures.mjs`. Assert against real numbers. `make fixtures`
-re-captures them.
+captured by `scripts/capture-fixtures.mjs` and anonymised by `scripts/anonymize-fixtures.mjs`
+on the way in. Handles, user ids, avatars, the league name, and league-chat fields are
+synthetic; every number is real. Assert on numbers, and read ids from the fixture rather
+than hardcoding them. `make fixtures` re-captures.
+
+Never commit a fixture that bypasses the anonymiser.
 
 `src/domain/**` has a 90% coverage threshold. New league logic needs a test.
 

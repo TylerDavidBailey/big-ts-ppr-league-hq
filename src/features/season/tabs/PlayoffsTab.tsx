@@ -5,7 +5,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { groupByRound } from '@/domain/bracket';
 import type { Bracket, SeasonModel } from '@/domain/types';
 import { cn } from '@/lib/cn';
-import { ordinal, placementLabel } from '@/lib/format';
+import { ordinal, placementLabel, statusLabel } from '@/lib/format';
 import type { SleeperBracketMatch } from '@/lib/sleeper/types';
 
 function MatchSlot({
@@ -106,11 +106,19 @@ export function PlayoffsTab({ season }: { season: SeasonModel }) {
   const { winnersBracket, losersBracket } = season;
 
   if (winnersBracket.matches.length === 0) {
-    return (
+    // Before kickoff there is no bracket and no season either, so pointing at a
+    // playoff week that is months away reads as though something is missing.
+    return season.hasScores ? (
       <EmptyState
         icon="🏆"
         title="No playoff bracket yet"
         description={`Sleeper builds the bracket when the playoffs start in week ${season.playoffWeekStart}.`}
+      />
+    ) : (
+      <EmptyState
+        icon="🏈"
+        title="The season hasn't started"
+        description={`This league is ${statusLabel(season.status).toLowerCase()}. The playoff bracket appears once week ${season.playoffWeekStart} arrives.`}
       />
     );
   }

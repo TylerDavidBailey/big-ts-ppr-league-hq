@@ -1,5 +1,5 @@
 {
-  "name": "Big-T's PPR League ",
+  "name": "The Sunday Scaries",
   "status": "complete",
   "metadata": {
     "auto_continue": "on",
@@ -58,9 +58,8 @@
     "reserve_allow_cov": 0,
     "daily_waivers_last_ran": 26
   },
-  "avatar": "aff747122aac06c00c983f572b245655",
+  "avatar": null,
   "company_id": null,
-  "last_message_id": "1312560036324593664",
   "sport": "nfl",
   "scoring_settings": {
     "sack": 1,
@@ -214,18 +213,9 @@
   "season": "2025",
   "season_type": "regular",
   "shard": 636,
-  "last_author_avatar": "9342370576cdc776d3fdfa5e3b7c1ee4",
-  "last_author_display_name": "tydbailey",
-  "last_author_id": "852229442578288640",
-  "last_author_is_bot": false,
-  "last_message_attachment": null,
-  "last_message_text_map": null,
-  "last_message_time": 1767301208147,
-  "last_pinned_message_id": "1312559711345704960",
-  "last_read_id": null,
   "draft_id": "1252998165825597440",
-  "league_id": "1252998165817208832",
-  "previous_league_id": "1124385652340043776",
+  "league_id": "8000000000000000001",
+  "previous_league_id": "8000000000000000002",
   "bracket_id": 1304407212336115700,
   "bracket_overrides_id": null,
   "group_id": null,

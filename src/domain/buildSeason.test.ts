@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildSeason } from './buildSeason';
-import { matchupsThrough, seasonFixture } from '@/test/fixtures';
+import { fixtureLeague, matchupsThrough, seasonFixture } from '@/test/fixtures';
 import type { SleeperMatchup } from '@/lib/sleeper/types';
 
 describe('buildSeason', () => {
@@ -9,7 +9,9 @@ describe('buildSeason', () => {
 
   it('reads league identity and playoff configuration', () => {
     expect(season.season).toBe('2025');
-    expect(season.leagueId).toBe('1252998165817208832');
+    // Read from the fixture rather than hardcoded: the ids are anonymised, so
+    // pinning a literal here only records the anonymiser's output.
+    expect(season.leagueId).toBe(fixtureLeague.league_id);
     expect(season.playoffWeekStart).toBe(15);
     // Regular season is weeks 1-14 for this league; the rule is derived, not hardcoded.
     expect(season.regularSeasonEndWeek).toBe(14);

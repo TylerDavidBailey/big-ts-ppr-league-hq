@@ -21,7 +21,7 @@ import {
 } from './endpoints';
 import { NotFoundError } from './client';
 import type { SleeperLeague, SleeperMatchup } from './types';
-import { MAX_NFL_WEEK } from '@/domain/buildSeason';
+import { lastWeekOfSeason } from '@/domain/buildSeason';
 import { loadPlayerIndex } from '@/lib/players';
 import { rememberChain, resolveChainHead } from '@/lib/storage';
 
@@ -165,7 +165,7 @@ export function useSeasonMatchups(
   league: SleeperLeague | undefined,
 ): UseQueryResult<SleeperMatchup[]>[] {
   const playoffWeekStart = league?.settings.playoff_week_start ?? 15;
-  const lastWeek = Math.min(MAX_NFL_WEEK, playoffWeekStart + 3);
+  const lastWeek = lastWeekOfSeason(playoffWeekStart, league?.settings.playoff_round_type);
   const weeks = league ? Array.from({ length: lastWeek }, (_, index) => index + 1) : [];
 
   return useQueries({

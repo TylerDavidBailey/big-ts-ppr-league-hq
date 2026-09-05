@@ -61,6 +61,14 @@ Fixtures in `src/test/fixtures/` are real Sleeper responses captured from a fini
 make fixtures
 ```
 
+The capture is anonymised on the way in by `scripts/anonymize-fixtures.mjs`. Manager
+handles, user ids, avatars, the league name, and the league-chat fields are replaced with
+synthetic values; every number is kept exactly as captured. So the fixtures carry no real
+person's data, and the tests still assert on real scores, records, and roster ids.
+
+Do not assert on a fixture's league id or a manager's handle as a string literal. Read it
+from the fixture instead, so re-anonymising does not break the test.
+
 `src/domain/**` has a 90% coverage threshold, so new league logic needs a test.
 
 ## Browser tests

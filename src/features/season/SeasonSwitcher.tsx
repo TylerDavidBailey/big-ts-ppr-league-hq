@@ -18,8 +18,13 @@ interface SeasonSwitcherProps {
 export function SeasonSwitcher({ chain, currentLeagueId, tab }: SeasonSwitcherProps) {
   if (chain.length <= 1) return null;
 
+  // Scrolls rather than wraps: a long-running league has a lot of seasons, and a
+  // wrapping block pushes the tabs off a phone screen.
   return (
-    <nav aria-label="Season" className="flex flex-wrap items-center gap-1.5">
+    <nav
+      aria-label="Season"
+      className="-mx-1 flex max-w-full items-center gap-1.5 overflow-x-auto px-1"
+    >
       {chain.map((league) => {
         const isCurrent = league.league_id === currentLeagueId;
         return (
@@ -28,7 +33,7 @@ export function SeasonSwitcher({ chain, currentLeagueId, tab }: SeasonSwitcherPr
             to={`/l/${league.league_id}/${tab}`}
             aria-current={isCurrent ? 'page' : undefined}
             className={cn(
-              'rounded-lg px-3 py-1.5 font-display text-sm font-semibold tabular transition',
+              'shrink-0 rounded-lg px-3 py-1.5 font-display text-sm font-semibold tabular transition',
               isCurrent
                 ? 'bg-brand text-canvas'
                 : 'border border-hairline text-ink-muted hover:border-brand/40 hover:text-brand',

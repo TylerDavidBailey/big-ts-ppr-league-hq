@@ -1,173 +1,122 @@
 [
   {
-    "avatar": "8498a4d4378d2748d3ed4a8149a4f339",
-    "display_name": "cmartin513",
+    "avatar": null,
+    "display_name": "gridironghost",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "457725514514165760"
+    "user_id": "9000000000000000001"
   },
   {
     "avatar": null,
-    "display_name": "jmgavin4",
+    "display_name": "punt_god",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "mention_pn": "on",
-      "team_name": "Hurts So Good"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "464840187873062912"
+    "user_id": "9000000000000000002"
   },
   {
-    "avatar": "ab9ca993e5b17d53771e19abf3307c47",
-    "display_name": "Samie_",
+    "avatar": null,
+    "display_name": "WaiverWizard",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on",
-      "team_name": "Samie"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "731368667836727296"
+    "user_id": "9000000000000000003"
   },
   {
-    "avatar": "9342370576cdc776d3fdfa5e3b7c1ee4",
-    "display_name": "tydbailey",
+    "avatar": null,
+    "display_name": "ChalkAndAwe",
     "is_bot": false,
     "is_owner": true,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "avatar": "https://sleepercdn.com/images/v2/avatars/avatar_default_blue.webp",
-      "mention_pn": "on",
-      "team_name": "Big-T"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "852229442578288640"
+    "user_id": "9000000000000000004"
   },
   {
-    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
-    "display_name": "AndreSmoove",
+    "avatar": null,
+    "display_name": "thebyeweek",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "avatar": "https://sleepercdn.com/uploads/49b64abaa005a67eab4bed998eae0215.jpg",
-      "mention_pn": "on",
-      "team_name": "Green Bowl Packerz"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "963521076565200896"
+    "user_id": "9000000000000000005"
   },
   {
-    "avatar": "8eb8f8bf999945d523f2c4033f70473e",
-    "display_name": "Tbach10",
+    "avatar": null,
+    "display_name": "FourthDownFrank",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1001975782966779904"
+    "user_id": "9000000000000000006"
   },
   {
-    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
-    "display_name": "Dveres1",
+    "avatar": null,
+    "display_name": "PlayActionPam",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on",
-      "team_name": "Doug Veres"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1002042778362306560"
+    "user_id": "9000000000000000007"
   },
   {
-    "avatar": "bb9a8c726b0bd85282396a904e0303e1",
-    "display_name": "Bigdogbetz",
+    "avatar": null,
+    "display_name": "redzone_rita",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1002446674469425152"
+    "user_id": "9000000000000000008"
   },
   {
-    "avatar": "b3a26438352d908d5c9876ba95aa8f63",
-    "display_name": "jaredn46",
+    "avatar": null,
+    "display_name": "HailMaryHank",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on",
-      "team_name": "My Ball Zach Ertz"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1004790759188422656"
+    "user_id": "9000000000000000009"
   },
   {
-    "avatar": "15d7cf259bc30eab8f6120f45f652fb6",
-    "display_name": "DesertStorm410",
+    "avatar": null,
+    "display_name": "CoverTwoCarl",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1005256199060770816"
+    "user_id": "9000000000000000010"
   },
   {
-    "avatar": "b3338675f635c2c1f42b469621d38ec6",
-    "display_name": "DaddyDerm91",
+    "avatar": null,
+    "display_name": "flexappeal",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1131261689770516480"
+    "user_id": "9000000000000000011"
   },
   {
-    "avatar": "4f4090e5e9c3941414db40a871e3e909",
-    "display_name": "Heykel",
+    "avatar": null,
+    "display_name": "ScreenPassSam",
     "is_bot": false,
     "is_owner": false,
-    "league_id": "1252998165817208832",
-    "metadata": {
-      "allow_pn": "on",
-      "allow_sms": "on",
-      "mention_pn": "on"
-    },
+    "league_id": "8000000000000000001",
+    "metadata": null,
     "settings": null,
-    "user_id": "1132362923189383168"
+    "user_id": "9000000000000000012"
   }
 ]
