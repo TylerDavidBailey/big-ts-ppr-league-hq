@@ -16,8 +16,10 @@ import winnersBracket from '../src/test/fixtures/winnersBracket.json' with { typ
 
 /** The finished 2025 season the fixtures were captured from. */
 export const FINISHED_LEAGUE_ID = league.league_id;
-/** The 2026 season, which the fixtures describe as pre-draft. */
+/** The 2026 season, served as pre-draft so the empty states can be tested. */
 export const PRE_DRAFT_LEAGUE_ID = '1373305494734651392';
+/** The 2024 season, which ends the chain. Taken from the fixture's own link. */
+export const OLDEST_LEAGUE_ID = league.previous_league_id;
 export const UNKNOWN_LEAGUE_ID = '12345';
 
 const json = (route: Route, body: unknown) =>
@@ -26,13 +28,32 @@ const json = (route: Route, body: unknown) =>
 const notFound = (route: Route) =>
   route.fulfill({ status: 404, contentType: 'application/json', body: 'null' });
 
-/** A pre-draft season: same league, no scores, no bracket. */
-const preDraftLeague = {
-  ...league,
-  league_id: PRE_DRAFT_LEAGUE_ID,
-  season: '2026',
-  status: 'pre_draft',
-  previous_league_id: FINISHED_LEAGUE_ID,
+/**
+ * Three seasons linked the way Sleeper links them.
+ *
+ * Each season is its own league, and `previous_league_id` on the oldest is
+ * null, which is what ends the walk in `getLeagueChain`. Serving the same
+ * league object for every id would make the chain fold back on itself.
+ */
+type LeagueResponse = Omit<typeof league, 'previous_league_id'> & {
+  previous_league_id: string | null;
+};
+
+const seasons: Record<string, LeagueResponse> = {
+  [PRE_DRAFT_LEAGUE_ID]: {
+    ...league,
+    league_id: PRE_DRAFT_LEAGUE_ID,
+    season: '2026',
+    status: 'pre_draft',
+    previous_league_id: FINISHED_LEAGUE_ID,
+  },
+  [FINISHED_LEAGUE_ID]: league,
+  [OLDEST_LEAGUE_ID]: {
+    ...league,
+    league_id: OLDEST_LEAGUE_ID,
+    season: '2024',
+    previous_league_id: null,
+  },
 };
 
 export async function mockSleeper(page: Page): Promise<void> {
@@ -47,13 +68,14 @@ export async function mockSleeper(page: Page): Promise<void> {
     if (!leagueMatch) return notFound(route);
 
     const [, id, , resource] = leagueMatch;
-    if (id === UNKNOWN_LEAGUE_ID) return notFound(route);
+    const season = id ? seasons[id] : undefined;
+    if (!season) return notFound(route);
 
     const isPreDraft = id === PRE_DRAFT_LEAGUE_ID;
 
     switch (resource) {
       case undefined:
-        return json(route, isPreDraft ? preDraftLeague : league);
+        return json(route, season);
       case 'users':
         return json(route, users);
       case 'rosters':

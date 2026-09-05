@@ -144,7 +144,16 @@ test.describe('a finished season', () => {
     await page.getByRole('link', { name: 'History' }).click();
 
     await expect(page.getByText('Season history')).toBeVisible();
-    await expect(page.getByRole('link', { name: /2025/ })).toBeVisible();
+
+    // Scoped by the list's accessible name, because the season switcher in the
+    // header also links to a season by year.
+    const rows = page.getByRole('list', { name: 'Season history' }).getByRole('listitem');
+
+    // The chain walks back from 2025 to 2024 and stops, because
+    // previous_league_id is null on the oldest season.
+    await expect(rows).toHaveCount(2);
+    await expect(rows.first()).toContainText('2025');
+    await expect(rows.last()).toContainText('2024');
   });
 });
 

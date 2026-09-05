@@ -31,7 +31,7 @@ export function HistoryTab({ chain, isLoading }: { chain: SleeperLeague[]; isLoa
       </CardHeader>
 
       <CardBody>
-        <ol className="space-y-2">
+        <ol aria-label="Season history" className="space-y-2">
           {chain.map((league) => (
             <li key={league.league_id}>
               <Link
