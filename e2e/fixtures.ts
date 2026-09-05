@@ -83,10 +83,17 @@ export interface MockOptions {
   failCurrentLeague?: boolean;
   /** Serve the configured id as a finished season with a newer one to discover. */
   newerSeasonExists?: boolean;
+  /**
+   * Serve the configured 2026 season as in progress, with this week being
+   * played. Weeks before it carry the 2025 fixture's scores and weeks after
+   * it are unplayed, so the live week is provisional and settles nothing.
+   */
+  liveWeek?: number;
 }
 
 export async function mockSleeper(page: Page, options: MockOptions = {}): Promise<void> {
   const seasons = options.newerSeasonExists ? configIsStale : configIsNewest;
+  const liveWeek = options.liveWeek ?? null;
 
   await page.route('https://api.sleeper.app/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -97,8 +104,8 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
       return json(route, {
         season: '2026',
         previous_season: '2025',
-        week: 1,
-        display_week: 1,
+        week: liveWeek ?? 1,
+        display_week: liveWeek ?? 1,
         season_type: 'regular',
       });
     }
@@ -118,9 +125,13 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
       return route.fulfill({ status: 500, contentType: 'text/plain', body: 'boom' });
     }
 
-    const season = id ? seasons[id] : undefined;
-    if (!season) return notFound(route);
+    const stored = id ? seasons[id] : undefined;
+    if (!stored) return notFound(route);
 
+    // The live scenario turns the pre-draft 2026 season into one mid-season.
+    const isLive = liveWeek !== null && stored.status === 'pre_draft';
+    const season: LeagueResponse = isLive ? { ...stored, status: 'in_season' } : stored;
+    const unplayedFrom = liveWeek === null ? Number.POSITIVE_INFINITY : liveWeek + 1;
     const isPreDraft = season.status === 'pre_draft';
 
     switch (resource) {
@@ -131,9 +142,9 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
       case 'rosters':
         return json(route, rosters);
       case 'winners_bracket':
-        return json(route, isPreDraft ? [] : winnersBracket);
+        return json(route, isPreDraft || isLive ? [] : winnersBracket);
       case 'losers_bracket':
-        return json(route, isPreDraft ? [] : losersBracket);
+        return json(route, isPreDraft || isLive ? [] : losersBracket);
       default: {
         // `case undefined` above already handled the bare league endpoint.
         const week = /^matchups\/(\d+)$/.exec(resource)?.[1];
@@ -141,7 +152,9 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
         // An unplayed week is an empty array under HTTP 200, which is what a
         // pre-draft league returns for every week.
         const rows = (matchups as Record<string, unknown[]>)[week] ?? [];
-        return json(route, isPreDraft ? [] : rows);
+        if (isPreDraft) return json(route, []);
+        if (isLive && Number(week) >= unplayedFrom) return json(route, []);
+        return json(route, rows);
       }
     }
   });

@@ -14,27 +14,45 @@ is stored. The page calls Sleeper's public API directly.
 
 ## What is on it
 
-The year nav at the top picks a season. The newest season is also the home page, so the
-link you share never goes stale.
+The year pills in the top bar pick a season. The newest season is also the home page, so
+the link you share never goes stale. Each season has six sections.
 
-**Awards.** The playoff podium and the three paid awards, each with its payout and the five
-places behind the winner. Beer duty for every week. The rules and payouts at the bottom.
-During the season, the latest beer duty sits at the top.
+**Overview.** During the season, the latest beer duty sits at the top. Then the podium once
+the playoffs begin, each paid award's current leader with its payout, who has drawn beer
+duty most often, and the teams in a playoff spot. Before the draft it shows the rules, the
+payouts, and everyone in the league.
 
-**Standings.** Records, points for and against, streak, and form. Below that, power
-rankings from the all-play record and a luck score, lineup efficiency against Sleeper's
-max-possible points, and season superlatives: biggest blowout, closest game, longest
-streaks, weekly top scores, and consistency.
+**Awards.** The playoff podium with the money, and the three paid awards, each with its
+payout, its rule, and the five places behind the winner.
 
-**All-time.** Career standings for every manager across seasons, with titles, 1 seeds, and
-beer duties. A record book of single-season and single-week records, and the champions of
-every season.
+**Beer duty.** The lowest scorer of every week, newest first, and a running tally of who
+owes the most beers.
+
+**Standings.** Records, points for and against, streak, and form, with the playoff line
+drawn through the table. Below that, power rankings from the all-play record and a luck
+score.
+
+**Stats.** Season superlatives: biggest blowout, closest game, longest streaks, weekly top
+scores, and consistency. Then lineup efficiency against Sleeper's max-possible points.
+
+**Rules.** The buy-in, the pot, every payout, the wording of each award, and the season
+format read from Sleeper's settings.
+
+**All-time** has three sections: career standings for every manager across seasons, with
+titles, 1 seeds, and beer duties; the champions of every season and a title count; and a
+record book of single-season and single-week records.
 
 Every view has its own link:
 
 ```
 https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025/awards
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025/beer-duty
 https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025/standings
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025/stats
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/2025/rules
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/all-time
+https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/all-time/champions
 https://tylerdavidbailey.github.io/big-ts-ppr-league-hq/#/all-time/records
 ```
 

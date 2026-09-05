@@ -105,7 +105,7 @@ src/
 		awards.ts       the four awards as ranked lists
 		stats.ts        power rankings, lineup efficiency, superlatives
 		history.ts      all-time standings, records, champions
-	features/         the page shell, the season tabs, the all-time tabs
+	features/         the page shell, the season views, the all-time views
 	lib/              Sleeper client, one-query-per-season fetch, player index, formatting
 	styles/           the Tailwind theme
 	test/             setup and captured fixtures
@@ -151,12 +151,19 @@ vocabulary. Sentence case headings. Straight quotes.
 
 ## Verifying a change by hand
 
-Five routes cover the states that matter. Run `make up` and open each one.
+Nine routes cover the states that matter. Run `make up` and open each one.
 
-- `/` is the newest season. While it is pre-draft, it shows the rules, the payouts, and
-  three empty podium slots.
-- `#/2025` is a finished season with a full bracket, five places on every award card, and
-  14 weeks of beer duty.
-- `#/2025/standings` has all four stats sections.
+- `/` is the newest season's overview. While it is pre-draft, it shows the rules, the
+  payouts, three empty podium slots, and the managers.
+- `#/2025` is a finished season's overview: the podium, each award's winner, the beer duty
+  leader, and the playoff seeds.
+- `#/2025/awards` has five places on every award card.
+- `#/2025/beer-duty` has 14 weeks and the season tally.
+- `#/2025/standings` has the table and the power rankings.
+- `#/2025/stats` has the superlatives and lineup efficiency.
+- `#/2025/rules` has the payouts and the season format.
 - `#/all-time` has one row per manager.
-- `#/all-time/records` has a champions row for every season and the record book.
+- `#/all-time/champions` has a row for every season; `#/all-time/records` the record book.
+
+The in-season state has no live league to open. `e2e/fixtures.ts` fakes one with the
+`liveWeek` option, which the browser tests use.

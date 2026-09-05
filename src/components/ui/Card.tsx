@@ -28,16 +28,34 @@ export function CardHeader({ children, className }: CardProps) {
   );
 }
 
+/**
+ * A card heading. An `h3`, because the page title is the `h2` and the site
+ * name is the `h1`; role queries in the tests do not care about the level.
+ */
 export function CardTitle({ children, className }: CardProps) {
   return (
-    <h2
+    <h3
       className={cn(
         'font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink-muted',
         className,
       )}
     >
       {children}
-    </h2>
+    </h3>
+  );
+}
+
+/** A footnote under a table or a list, inside the card's hairline. */
+export function CardFooter({ children, className }: CardProps) {
+  return (
+    <div
+      className={cn(
+        'border-t border-hairline px-5 py-3 text-xs leading-relaxed text-ink-dim',
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 

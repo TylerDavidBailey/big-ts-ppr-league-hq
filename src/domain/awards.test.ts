@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  beerDutyTally,
   computeSeasonAwards,
   rankPlaces,
   rankStandings,
@@ -132,6 +133,58 @@ describe('weeklyLowScorers', () => {
 
   it('never covers a playoff week', () => {
     expect(losers.every((loser) => loser.week! <= season.regularSeasonEndWeek)).toBe(true);
+  });
+});
+
+describe('beerDutyTally', () => {
+  const losers = weeklyLowScorers(season);
+
+  it('counts every settled week once across the teams', () => {
+    const tally = beerDutyTally(losers);
+    const total = tally.reduce((sum, row) => sum + row.value, 0);
+
+    expect(total).toBe(season.regularSeasonWeeks.length);
+    expect(tally[0]!.place).toBe(1);
+    for (let index = 1; index < tally.length; index += 1) {
+      expect(tally[index]!.value).toBeLessThanOrEqual(tally[index - 1]!.value);
+    }
+  });
+
+  it('lists the weeks behind each count, in order', () => {
+    const tally = beerDutyTally(losers);
+    for (const row of tally) {
+      const weeks = losers
+        .filter((loser) => loser.rosterId === row.rosterId)
+        .map((loser) => loser.week!)
+        .sort((a, b) => a - b);
+      expect(row.detail).toBe(`Wk ${weeks.join(', ')}`);
+    }
+  });
+
+  it('shares first place between teams level on count', () => {
+    const entry = (rosterId: number, week: number) => ({
+      rosterId,
+      week,
+      value: 50,
+      place: 1,
+      tied: false,
+    });
+    const tally = beerDutyTally([entry(1, 1), entry(2, 2), entry(1, 3), entry(2, 4), entry(3, 5)]);
+
+    expect(tally.map((row) => [row.rosterId, row.place, row.tied])).toEqual([
+      [1, 1, true],
+      [2, 1, true],
+      [3, 3, false],
+    ]);
+  });
+
+  it('cuts off by place when asked', () => {
+    const tally = beerDutyTally(losers, 1);
+    expect(tally.every((row) => row.place === 1)).toBe(true);
+  });
+
+  it('is empty before any week is played', () => {
+    expect(beerDutyTally([])).toEqual([]);
   });
 });
 

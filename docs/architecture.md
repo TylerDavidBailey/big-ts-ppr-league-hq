@@ -130,8 +130,14 @@ works.
 rewrite, so a path route would 404 on a cold load. A hash route needs no trick, and
 `#/2025/standings` survives being pasted into a group chat.
 
-`/` is the newest season, so the shared link never goes stale. A year reaches any season.
-`all-time` reads them all.
+`/` is the newest season, so the shared link never goes stale. A year reaches any season,
+and each season has one route per section: the overview at the year itself, then
+`awards`, `beer-duty`, `standings`, `stats`, and `rules`. `all-time` reads every season
+into three sections: the managers, `champions`, and `records`.
+
+Every route renders inside one shell, `LeaguePage`, which owns the top bar and the season
+pills. `SeasonRoute` and `AllTimeRoute` each fetch once and switch the section under a
+shared page header, so moving between sections never refetches.
 
 ## Base path
 
@@ -157,7 +163,7 @@ src/
 	app/              providers, router, error boundary, query client
 	components/       UI primitives and site chrome
 	domain/           pure league logic. No React, no fetch
-	features/         the page shell, the season tabs, the all-time tabs
+	features/         the page shell, the season views, the all-time views
 	lib/              Sleeper client, one-query-per-season fetch, player index, formatting
 	styles/           the theme
 	test/             setup and captured fixtures

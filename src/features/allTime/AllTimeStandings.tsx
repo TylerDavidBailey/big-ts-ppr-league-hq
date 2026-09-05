@@ -1,5 +1,5 @@
 import { ManagerChip } from '../shared/ManagerChip';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card';
 import { HeadRow, RankCell, Row, Table, Td, Th } from '@/components/ui/Table';
 import { allTimeStandings, type SeasonSummary } from '@/domain/history';
 import { LEAGUE } from '@/league.config';
@@ -12,7 +12,8 @@ const Trophy = ({ count, tone }: { count: number; tone: string }) => (
   </Td>
 );
 
-export function StandingsTab({ summaries }: { summaries: SeasonSummary[] }) {
+/** Career regular-season records, one row per manager. */
+export function AllTimeStandings({ summaries }: { summaries: SeasonSummary[] }) {
   const rows = allTimeStandings(summaries);
   const seasons = summaries.filter(({ season }) => season.hasScores).length;
 
@@ -92,10 +93,13 @@ export function StandingsTab({ summaries }: { summaries: SeasonSummary[] }) {
           ))}
         </tbody>
       </Table>
-      <p className="border-t border-hairline px-4 py-3 text-xs text-ink-dim">
+      <CardFooter>
         Regular-season records, ranked by win percentage then points per game. Managers are matched
-        across seasons by their Sleeper account. Playoffs counts winners-bracket appearances.
-      </p>
+        across seasons by their Sleeper account. Playoffs counts winners-bracket appearances. 🏆 🥈
+        🥉 are playoff finishes, {LEAGUE.awards.regularSeasonChamp.icon} is the{' '}
+        {LEAGUE.awards.regularSeasonChamp.name}, {LEAGUE.punishment.icon} is{' '}
+        {LEAGUE.punishment.name.toLowerCase()} weeks.
+      </CardFooter>
     </Card>
   );
 }
