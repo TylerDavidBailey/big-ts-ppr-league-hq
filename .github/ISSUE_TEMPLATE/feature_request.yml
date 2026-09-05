@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a new award, view, or capability.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of request
+      options:
+        - A new season award
+        - A new view or tab
+        - A change to an existing view
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: rule
+    attributes:
+      label: The rule, stated precisely
+      description: >
+        For an award, state the exact rule. Say which weeks it covers, how ties
+        break, and whether bench players count.
+      placeholder: 'Most points scored in a loss, regular season only.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Why it is worth having

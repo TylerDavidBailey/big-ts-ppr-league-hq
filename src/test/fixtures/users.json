@@ -1,0 +1,173 @@
+[
+  {
+    "avatar": "8498a4d4378d2748d3ed4a8149a4f339",
+    "display_name": "cmartin513",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "457725514514165760"
+  },
+  {
+    "avatar": null,
+    "display_name": "jmgavin4",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "mention_pn": "on",
+      "team_name": "Hurts So Good"
+    },
+    "settings": null,
+    "user_id": "464840187873062912"
+  },
+  {
+    "avatar": "ab9ca993e5b17d53771e19abf3307c47",
+    "display_name": "Samie_",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on",
+      "team_name": "Samie"
+    },
+    "settings": null,
+    "user_id": "731368667836727296"
+  },
+  {
+    "avatar": "9342370576cdc776d3fdfa5e3b7c1ee4",
+    "display_name": "tydbailey",
+    "is_bot": false,
+    "is_owner": true,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "avatar": "https://sleepercdn.com/images/v2/avatars/avatar_default_blue.webp",
+      "mention_pn": "on",
+      "team_name": "Big-T"
+    },
+    "settings": null,
+    "user_id": "852229442578288640"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "AndreSmoove",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "avatar": "https://sleepercdn.com/uploads/49b64abaa005a67eab4bed998eae0215.jpg",
+      "mention_pn": "on",
+      "team_name": "Green Bowl Packerz"
+    },
+    "settings": null,
+    "user_id": "963521076565200896"
+  },
+  {
+    "avatar": "8eb8f8bf999945d523f2c4033f70473e",
+    "display_name": "Tbach10",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1001975782966779904"
+  },
+  {
+    "avatar": "b319fdf8b7b5b0359d3c78622ba4d70c",
+    "display_name": "Dveres1",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on",
+      "team_name": "Doug Veres"
+    },
+    "settings": null,
+    "user_id": "1002042778362306560"
+  },
+  {
+    "avatar": "bb9a8c726b0bd85282396a904e0303e1",
+    "display_name": "Bigdogbetz",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1002446674469425152"
+  },
+  {
+    "avatar": "b3a26438352d908d5c9876ba95aa8f63",
+    "display_name": "jaredn46",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on",
+      "team_name": "My Ball Zach Ertz"
+    },
+    "settings": null,
+    "user_id": "1004790759188422656"
+  },
+  {
+    "avatar": "15d7cf259bc30eab8f6120f45f652fb6",
+    "display_name": "DesertStorm410",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1005256199060770816"
+  },
+  {
+    "avatar": "b3338675f635c2c1f42b469621d38ec6",
+    "display_name": "DaddyDerm91",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1131261689770516480"
+  },
+  {
+    "avatar": "4f4090e5e9c3941414db40a871e3e909",
+    "display_name": "Heykel",
+    "is_bot": false,
+    "is_owner": false,
+    "league_id": "1252998165817208832",
+    "metadata": {
+      "allow_pn": "on",
+      "allow_sms": "on",
+      "mention_pn": "on"
+    },
+    "settings": null,
+    "user_id": "1132362923189383168"
+  }
+]

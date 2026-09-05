@@ -1,0 +1,43 @@
+name: Bug report
+description: Something renders wrong, crashes, or shows the wrong numbers.
+labels: [bug]
+body:
+  - type: input
+    id: league-id
+    attributes:
+      label: League ID
+      description: The Sleeper league ID you were viewing. This is public data.
+      placeholder: '1373305494734651392'
+    validations:
+      required: true
+
+  - type: input
+    id: season
+    attributes:
+      label: Season
+      placeholder: '2025'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tab
+    attributes:
+      label: Which tab
+      options: [Awards, Standings, Scoreboard, Playoffs, History, Landing page]
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what you got instead
+      description: If a number is wrong, say what Sleeper itself shows.
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console output
+      description: Any errors from the developer console. Optional.
+      render: text
