@@ -50,7 +50,9 @@ gh repo edit "$REPO" \
 Require CI to pass before anything reaches `main`.
 
 Go to **Settings → Branches** and add a rule for `main`. Require a pull request, and require
-the status check named `Lint, typecheck, test, build`.
+both status checks: `Lint, typecheck, test, build` and `Browser tests`. Those strings are
+the `name:` of each job in `.github/workflows/ci.yml`. If you rename a job, update the
+protection rule in the same commit or nothing will ever be mergeable again.
 
 ```bash
 gh api -X PUT "repos/$REPO/branches/main/protection" \
@@ -58,7 +60,7 @@ gh api -X PUT "repos/$REPO/branches/main/protection" \
 {
 	"required_status_checks": {
 		"strict": true,
-		"contexts": ["Lint, typecheck, test, build"]
+		"contexts": ["Lint, typecheck, test, build", "Browser tests"]
 	},
 	"enforce_admins": false,
 	"required_pull_request_reviews": {
