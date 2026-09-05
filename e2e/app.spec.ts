@@ -173,8 +173,11 @@ test.describe('a league with no games played', () => {
     await page.getByRole('link', { name: 'Scoreboard' }).click();
     await expect(page.getByText('No weeks played yet')).toBeVisible();
 
+    // A league that has not drafted is told the season has not started, rather
+    // than being pointed at a playoff week that is months away.
     await page.getByRole('link', { name: 'Playoffs' }).click();
-    await expect(page.getByText('No playoff bracket yet')).toBeVisible();
+    await expect(page.getByText("The season hasn't started")).toBeVisible();
+    await expect(page.getByText('No playoff bracket yet')).toBeHidden();
   });
 });
 
