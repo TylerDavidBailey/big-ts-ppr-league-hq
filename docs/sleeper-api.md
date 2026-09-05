@@ -108,6 +108,11 @@ The league chains 2026 to 2025 to 2024 to 2023. `getLeagueChain` starts from the
 already-fetched newest season and walks back with a visited set and a 60-season cycle
 guard, so bad data cannot loop forever.
 
+There is no forward link. To find the season that replaced a finished league, list a
+manager's leagues for the next year with `GET /user/{userId}/leagues/nfl/{season}` and
+pick the one whose `previous_league_id` matches. `resolveHead` in `src/lib/sleeper/head.ts`
+does this, commissioner first, and a deleted account answers 404 there.
+
 ### `/players/nfl` is 14.6 MB
 
 The full player payload is 14.6 MB of JSON for 12,226 players, 2.6 MB gzipped. Sleeper asks

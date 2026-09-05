@@ -22,6 +22,8 @@ export const CURRENT_LEAGUE_ID = LEAGUE.leagueId;
 export const FINISHED_LEAGUE_ID = league.league_id;
 /** The 2024 season, which ends the chain. Taken from the fixture's own link. */
 export const OLDEST_LEAGUE_ID = league.previous_league_id;
+/** A 2026 season the config does not know about, for the forward walk. */
+export const NEWER_LEAGUE_ID = '8000000000000000004';
 
 const json = (route: Route, body: unknown) =>
   route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
@@ -40,7 +42,15 @@ type LeagueResponse = Omit<typeof league, 'previous_league_id'> & {
   previous_league_id: string | null;
 };
 
-const seasons: Record<string, LeagueResponse> = {
+const oldest: LeagueResponse = {
+  ...league,
+  league_id: OLDEST_LEAGUE_ID,
+  season: '2024',
+  previous_league_id: null,
+};
+
+/** The configured id is the 2026 pre-draft season, chained to the fixture. */
+const configIsNewest: Record<string, LeagueResponse> = {
   [CURRENT_LEAGUE_ID]: {
     ...league,
     league_id: CURRENT_LEAGUE_ID,
@@ -49,20 +59,35 @@ const seasons: Record<string, LeagueResponse> = {
     previous_league_id: FINISHED_LEAGUE_ID,
   },
   [FINISHED_LEAGUE_ID]: league,
-  [OLDEST_LEAGUE_ID]: {
+  [OLDEST_LEAGUE_ID]: oldest,
+};
+
+/**
+ * The configured id is the finished 2025 season, and a 2026 season exists
+ * that only a manager's league list reveals.
+ */
+const configIsStale: Record<string, LeagueResponse> = {
+  [NEWER_LEAGUE_ID]: {
     ...league,
-    league_id: OLDEST_LEAGUE_ID,
-    season: '2024',
-    previous_league_id: null,
+    league_id: NEWER_LEAGUE_ID,
+    season: '2026',
+    status: 'pre_draft',
+    previous_league_id: CURRENT_LEAGUE_ID,
   },
+  [CURRENT_LEAGUE_ID]: { ...league, league_id: CURRENT_LEAGUE_ID },
+  [OLDEST_LEAGUE_ID]: oldest,
 };
 
 export interface MockOptions {
   /** Answer the configured league with a server error, to test the failure state. */
   failCurrentLeague?: boolean;
+  /** Serve the configured id as a finished season with a newer one to discover. */
+  newerSeasonExists?: boolean;
 }
 
 export async function mockSleeper(page: Page, options: MockOptions = {}): Promise<void> {
+  const seasons = options.newerSeasonExists ? configIsStale : configIsNewest;
+
   await page.route('https://api.sleeper.app/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
 
@@ -78,6 +103,13 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
       });
     }
 
+    // A manager's leagues for a year. Only the stale-config scenario has one.
+    const userLeagues = /^\/v1\/user\/\d+\/leagues\/nfl\/(\d{4})$/.exec(path);
+    if (userLeagues) {
+      const found = options.newerSeasonExists && userLeagues[1] === '2026';
+      return json(route, found ? [seasons[NEWER_LEAGUE_ID]] : []);
+    }
+
     const leagueMatch = /^\/v1\/league\/(\d+)(\/(.*))?$/.exec(path);
     if (!leagueMatch) return notFound(route);
 
@@ -89,7 +121,7 @@ export async function mockSleeper(page: Page, options: MockOptions = {}): Promis
     const season = id ? seasons[id] : undefined;
     if (!season) return notFound(route);
 
-    const isPreDraft = id === CURRENT_LEAGUE_ID;
+    const isPreDraft = season.status === 'pre_draft';
 
     switch (resource) {
       case undefined:

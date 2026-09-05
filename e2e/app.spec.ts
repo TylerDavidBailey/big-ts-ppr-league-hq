@@ -35,6 +35,22 @@ test.describe('the landing page', () => {
   });
 });
 
+test.describe('a new season the config does not know about', () => {
+  test('is found through a manager and becomes the landing page', async ({ page }) => {
+    await mockSleeper(page, { newerSeasonExists: true });
+    await page.goto('/');
+
+    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
+    const years = page.getByRole('navigation', { name: 'Season', exact: true }).getByRole('link');
+    await expect(years).toHaveText(['2026', '2025', '2024', 'All-time']);
+    await expect(years.first()).toHaveAttribute('aria-current', 'page');
+
+    // The configured season is still reachable by year.
+    await page.goto('/#/2025');
+    await expect(page.getByText('Final', { exact: true })).toBeVisible();
+  });
+});
+
 test.describe('a finished season', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/#/2025');

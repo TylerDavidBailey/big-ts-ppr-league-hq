@@ -159,3 +159,80 @@ describe('superlatives', () => {
     expect(empty.mostConsistent).toEqual([]);
   });
 });
+
+describe('stats edge cases', () => {
+  const week1 = fixture.matchupsByWeek.get(1)!;
+  const [home] = week1;
+  const away = week1.find(
+    (matchup) => matchup.matchup_id === home!.matchup_id && matchup.roster_id !== home!.roster_id,
+  )!;
+
+  const oneWeek = (rows: typeof week1) =>
+    buildSeason(seasonFixture({ matchupsByWeek: new Map([[1, rows]]) }));
+
+  it('counts an all-play tie as half a win', () => {
+    const tied = oneWeek(week1.map((row, index) => (index < 2 ? { ...row, points: 100 } : row)));
+    const rows = powerRankings(tied);
+    const tiedRows = rows.filter((row) => row.allPlayTies > 0);
+
+    expect(tiedRows).toHaveLength(2);
+    expect(tiedRows[0]!.allPlayTies).toBe(1);
+    expect(tiedRows[0]!.expectedWins).toBeCloseTo((tiedRows[0]!.allPlayWins + 0.5) / 11, 2);
+  });
+
+  it('treats a bye as neither a win nor a loss in a streak', () => {
+    const winner = home!.points! > away.points! ? home! : away;
+    const loser = winner === home ? away : home!;
+    // Week 2: the winner sits out, so the loser has a bye, and every other
+    // pair swaps scores so nobody else strings two wins together.
+    const week2 = week1
+      .filter((row) => row.roster_id !== winner.roster_id)
+      .map((row) => {
+        if (row.roster_id === loser.roster_id) return row;
+        const opponent = week1.find(
+          (other) => other.matchup_id === row.matchup_id && other.roster_id !== row.roster_id,
+        )!;
+        return { ...row, points: opponent.points };
+      });
+    const withBye = buildSeason(
+      seasonFixture({
+        matchupsByWeek: new Map([
+          [1, week1],
+          [2, week2],
+          [3, week1],
+        ]),
+      }),
+    );
+
+    expect(superlatives(withBye).longestWinStreak).toEqual([
+      { rosterId: winner.roster_id, length: 2, fromWeek: 1, toWeek: 3 },
+    ]);
+  });
+
+  it('reports no consistency with a single week of scores', () => {
+    const stats = superlatives(oneWeek(week1));
+    expect(stats.mostConsistent).toEqual([]);
+    expect(stats.leastConsistent).toEqual([]);
+    expect(stats.longestLossStreak[0]?.length).toBe(1);
+  });
+
+  it('ranks a team with no possible points last, with null efficiency', () => {
+    const zeroMax = buildSeason({
+      ...fixture,
+      rosters: fixture.rosters.map((roster) =>
+        roster.roster_id === 1
+          ? { ...roster, settings: { ...roster.settings, ppts: 0, ppts_decimal: 0 } }
+          : roster,
+      ),
+    });
+    const rows = lineupEfficiency(zeroMax);
+    expect(rows.at(-1)?.rosterId).toBe(1);
+    expect(rows.at(-1)?.efficiency).toBeNull();
+  });
+
+  it('ignores a week with only one roster', () => {
+    const lonely = oneWeek([home!]);
+    expect(powerRankings(lonely).every((row) => row.allPlayWins === 0)).toBe(true);
+    expect(superlatives(lonely).biggestBlowout).toEqual([]);
+  });
+});

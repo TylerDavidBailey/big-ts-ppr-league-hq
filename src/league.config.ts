@@ -20,10 +20,12 @@ export interface AwardConfig {
 export interface LeagueConfig {
   name: string;
   /**
-   * The newest season's Sleeper league id.
+   * The Sleeper league id of any season of this league.
    *
-   * Every earlier season is found by walking `previous_league_id` from here,
-   * so this is the only id that ever needs updating, once a year.
+   * Earlier seasons are found by walking `previous_league_id` back from here.
+   * Later seasons are found by asking the managers for their leagues the
+   * following year, so this never needs a yearly edit. Bumping it to the
+   * newest season saves a couple of requests, nothing more.
    */
   leagueId: string;
   /** Dollars per team. The pot is this times the number of teams. */

@@ -59,6 +59,16 @@ export const getLosersBracket = (leagueId: string, signal?: AbortSignal) =>
   getBracket(leagueId, 'losers_bracket', signal);
 
 /**
+ * A user's leagues for one season. `[]` when they were in none.
+ *
+ * This is the only way to walk the season chain forwards: `previous_league_id`
+ * points backwards, so the newest season is found by asking a manager for
+ * their leagues the following year. See `head.ts`.
+ */
+export const getUserLeagues = (userId: string, season: string, signal?: AbortSignal) =>
+  fetchSleeper<SleeperLeague[]>(`/user/${userId}/leagues/nfl/${season}`, { signal });
+
+/**
  * Walk `previous_league_id` back through every prior season of a league.
  *
  * Starts from an already-fetched newest season, so the walk costs one request

@@ -10,8 +10,14 @@ The site serves one league. Its Sleeper id, the buy-in, every payout, the award 
 rules, and the punishment text live in `src/league.config.ts`. Nothing else in the repo
 knows a dollar amount or an award name.
 
-The config holds only the newest season's id. Every earlier season is found by walking
-`previous_league_id` from there, so a new season costs one line: the new id.
+The config holds one season's id, and the site works out the rest. Earlier seasons are
+found by walking `previous_league_id` back. Sleeper offers no forward link, so
+`resolveHead` in `src/lib/sleeper/head.ts` finds newer seasons another way: when the
+configured league is `complete`, it lists the commissioner's leagues for the following year
+and picks the one whose `previous_league_id` points back. It repeats until nothing newer
+turns up, and asks two more managers if the commissioner has left. A new season therefore
+needs no edit at all. During the season and before the draft the league is not `complete`,
+so the lookup costs nothing.
 
 ## One pure function at the centre
 

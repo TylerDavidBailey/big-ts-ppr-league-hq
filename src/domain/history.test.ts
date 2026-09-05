@@ -223,3 +223,46 @@ describe('champions', () => {
     expect(row?.topSeeds).toEqual([]);
   });
 });
+
+describe('history edge cases', () => {
+  it('ignores bracket rows and placements that name no roster', () => {
+    const odd = buildSeason({
+      ...fixture,
+      winnersBracket: [
+        { r: 1, m: 1, t1: null, t2: null, w: null, l: null },
+        { r: 2, m: 2, t1: 999, t2: 7, w: 999, l: 7, p: 1 },
+      ],
+    });
+    const rows = allTimeStandings([summarise(odd)]);
+
+    expect(rows.reduce((sum, row) => sum + row.titles, 0)).toBe(0);
+    expect(rows.reduce((sum, row) => sum + row.runnerUps, 0)).toBe(1);
+    expect(rows.reduce((sum, row) => sum + row.playoffAppearances, 0)).toBe(1);
+
+    const [row] = champions([summarise(odd)]);
+    expect(row?.champion).toBeNull();
+    expect(row?.runnerUp?.rosterId).toBe(7);
+  });
+
+  it('drops a record holder whose roster is unknown', () => {
+    const missingTeam: SeasonModel = {
+      ...season2025,
+      teams: season2025.teams.filter((team) => team.rosterId !== 7),
+      teamsByRosterId: new Map([...season2025.teamsByRosterId].filter(([id]) => id !== 7)),
+    };
+    const records = allTimeRecords([summarise(missingTeam)]);
+    expect(records.every((record) => record.holders.every((h) => h.rosterId !== 7))).toBe(true);
+
+    const blowout = records.find((record) => record.id === 'biggest-blowout')!;
+    expect(blowout.holders.length).toBeGreaterThan(0);
+  });
+
+  it('breaks an all-time standings tie on points per game', () => {
+    const rows = allTimeStandings(twoSeasons);
+    const level = rows.filter((row, index) => rows[index + 1]?.winPct === row.winPct);
+    for (const row of level) {
+      const next = rows[rows.indexOf(row) + 1]!;
+      expect(row.pointsPerGame).toBeGreaterThanOrEqual(next.pointsPerGame);
+    }
+  });
+});

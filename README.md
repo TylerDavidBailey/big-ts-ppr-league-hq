@@ -44,8 +44,9 @@ Everything Sleeper does not know lives in one file: [src/league.config.ts](src/l
 The league id, the buy-in, each payout, the award names and rules, and the punishment
 text. Edit it, push to `main`, and the site redeploys.
 
-When a new season starts, Sleeper creates a new league id. Put the new id in `leagueId`.
-Earlier seasons are found by walking `previous_league_id` from there.
+A new season needs no edit. Sleeper creates a new league id each year, and the site finds
+it by asking a manager for their leagues the following year. `leagueId` can be any season
+of the league; earlier seasons are found by walking `previous_league_id` back from it.
 
 ## Run it locally
 

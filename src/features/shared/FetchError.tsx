@@ -5,8 +5,8 @@ import { NotFoundError } from '@/lib/sleeper/client';
 /**
  * A failed Sleeper request, explained.
  *
- * A 404 on the configured league can only mean the id in the config is wrong,
- * since the id never comes from the visitor.
+ * A 404 can only mean the id in the config is wrong, since no id ever comes
+ * from the visitor.
  */
 export function FetchError({ error }: { error: Error }) {
   if (error instanceof NotFoundError) {

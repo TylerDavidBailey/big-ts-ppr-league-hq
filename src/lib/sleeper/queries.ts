@@ -9,6 +9,7 @@ import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query
 
 import { NotFoundError } from './client';
 import { getLeague, getLeagueChain } from './endpoints';
+import { resolveHead } from './head';
 import { fetchSeason } from './season';
 import type { SleeperLeague } from './types';
 import type { SeasonModel } from '@/domain/types';
@@ -37,11 +38,16 @@ export const usePlayerIndex = () =>
     staleTime: FOREVER,
   });
 
-/** The configured league, which is the newest season. */
+/**
+ * The newest season.
+ *
+ * Starts from the configured league and walks forward through any season
+ * created since, so the config never needs a yearly edit.
+ */
 export const useCurrentLeague = () =>
   useQuery({
     queryKey: queryKeys.league(LEAGUE.leagueId),
-    queryFn: ({ signal }) => getLeague(LEAGUE.leagueId, signal),
+    queryFn: async ({ signal }) => resolveHead(await getLeague(LEAGUE.leagueId, signal), signal),
     staleTime: FIVE_MINUTES,
     retry: notFoundRetry,
   });
@@ -49,7 +55,7 @@ export const useCurrentLeague = () =>
 /**
  * Every season of the league, newest first.
  *
- * The walk starts from the already-fetched newest season and follows
+ * The walk starts from the already-resolved newest season and follows
  * `previous_league_id` back to the first one, so the landing page never waits
  * on it: the current season renders as soon as its own league resolves.
  */
