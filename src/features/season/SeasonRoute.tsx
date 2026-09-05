@@ -4,6 +4,7 @@ import { AwardsView } from './AwardsView';
 import { BeerDutyView } from './BeerDutyView';
 import { OverviewView } from './OverviewView';
 import { RulesView } from './RulesView';
+import { SEASON_SECTIONS, type SeasonView } from './sections';
 import { StandingsView } from './StandingsView';
 import { StatsView } from './StatsView';
 import { useSeasonAwards } from './useSeasonAwards';
@@ -19,17 +20,6 @@ import type { SeasonModel } from '@/domain/types';
 import { LEAGUE } from '@/league.config';
 import { formatMoney, formatRelativeTime, statusLabel } from '@/lib/format';
 import { useSeasonModel } from '@/lib/sleeper/queries';
-
-export type SeasonView = 'overview' | 'awards' | 'beer-duty' | 'standings' | 'stats' | 'rules';
-
-const VIEWS: { view: SeasonView; label: string; path: string }[] = [
-  { view: 'overview', label: 'Overview', path: '' },
-  { view: 'awards', label: 'Awards', path: '/awards' },
-  { view: 'beer-duty', label: 'Beer duty', path: '/beer-duty' },
-  { view: 'standings', label: 'Standings', path: '/standings' },
-  { view: 'stats', label: 'Stats', path: '/stats' },
-  { view: 'rules', label: 'Rules', path: '/rules' },
-];
 
 /** Where the season stands. */
 function StatusBadge({ season }: { season: SeasonModel }) {
@@ -148,7 +138,7 @@ export function SeasonRoute({ view }: { view: SeasonView }) {
 
       <TabNav
         label="Season sections"
-        items={VIEWS.map((item) => ({
+        items={SEASON_SECTIONS.map((item) => ({
           to: `/${season.season}${item.path}`,
           label: item.label,
           active: item.view === view,
