@@ -142,7 +142,14 @@ export function SeasonSwitcher({ chain, loading }: { chain: SleeperLeague[]; loa
   };
 
   // Tabbing past the last row leaves the panel, so it should not stay open.
+  //
+  // Only a blur that names where focus went closes it. Safari does not focus a
+  // link it is pressing, so the press blurs the focused row with no new focus
+  // target; closing there would unmount the row before its click landed, and
+  // the season would never open. A press outside is already handled by
+  // `pointerdown`, so nothing is left open that should not be.
   const onBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.relatedTarget) return;
     if (!wrapperRef.current?.contains(event.relatedTarget)) setOpen(false);
   };
 
