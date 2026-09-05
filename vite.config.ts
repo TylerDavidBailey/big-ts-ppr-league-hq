@@ -30,9 +30,19 @@ export default defineConfig(({ command, isPreview }) => ({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          query: ['@tanstack/react-query'],
+        // Vite 8 bundles with rolldown, which takes only the function form of
+        // manualChunks. Matching on the module id keeps each package's own
+        // dependencies in the chunk with it, as the object form did.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (
+            /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(
+              id,
+            )
+          ) {
+            return 'react';
+          }
+          if (/node_modules[\\/]@tanstack[\\/]react-query[\\/]/.test(id)) return 'query';
         },
       },
     },
