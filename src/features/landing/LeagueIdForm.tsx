@@ -1,15 +1,8 @@
 import { useState, type SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { EXAMPLE_LEAGUE_ID } from '@/lib/exampleLeague';
 import { isValidLeagueId } from '@/lib/format';
-
-/**
- * A public league to show someone who arrived without an ID of their own.
- *
- * Without a way in, a visitor with no ID handy has nothing to look at and
- * leaves. League data is public, so linking one costs nothing.
- */
-export const EXAMPLE_LEAGUE_ID = '1252998165817208832';
 
 /** Sleeper league URLs look like https://sleeper.com/leagues/1234567890/team */
 function extractLeagueId(input: string): string {

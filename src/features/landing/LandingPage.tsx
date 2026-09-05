@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
-import { EXAMPLE_LEAGUE_ID, LeagueIdForm } from './LeagueIdForm';
+import { LeagueIdForm } from './LeagueIdForm';
+import { EXAMPLE_LEAGUE_ID } from '@/lib/exampleLeague';
 import { RecentLeagues } from './RecentLeagues';
 import { UsernameLookup } from './UsernameLookup';
 

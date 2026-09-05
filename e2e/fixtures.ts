@@ -7,6 +7,8 @@
  */
 import type { Page, Route } from '@playwright/test';
 
+import { EXAMPLE_LEAGUE_ID } from '../src/lib/exampleLeague';
+
 import league from '../src/test/fixtures/league.json' with { type: 'json' };
 import losersBracket from '../src/test/fixtures/losersBracket.json' with { type: 'json' };
 import matchups from '../src/test/fixtures/matchups.json' with { type: 'json' };
@@ -52,6 +54,9 @@ const seasons: Record<string, LeagueResponse> = {
     previous_league_id: FINISHED_LEAGUE_ID,
   },
   [FINISHED_LEAGUE_ID]: league,
+  // The landing page's "example league" link points at a real public league,
+  // so the mock answers that id with the finished-season fixture.
+  [EXAMPLE_LEAGUE_ID]: { ...league, league_id: EXAMPLE_LEAGUE_ID },
   [OLDEST_LEAGUE_ID]: {
     ...league,
     league_id: OLDEST_LEAGUE_ID,
