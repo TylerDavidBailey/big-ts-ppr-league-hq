@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 
-import { RecordsTab } from './RecordsTab';
-import { StandingsTab } from './StandingsTab';
+import { AllTimeStandings } from './AllTimeStandings';
+import { ChampionsView } from './ChampionsView';
+import { RecordsView } from './RecordsView';
 import { useLeagueContext } from '../league/useRouteLeague';
 import { FetchError } from '../shared/FetchError';
 import { TabNav } from '../shared/TabNav';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { computeSeasonAwards } from '@/domain/awards';
@@ -13,7 +15,13 @@ import { LEAGUE } from '@/league.config';
 import { playerNameResolver } from '@/lib/players';
 import { useAllSeasonModels, usePlayerIndex } from '@/lib/sleeper/queries';
 
-export type AllTimeTab = 'standings' | 'records';
+export type AllTimeView = 'standings' | 'champions' | 'records';
+
+const VIEWS: { view: AllTimeView; label: string; path: string }[] = [
+  { view: 'standings', label: 'Managers', path: '/all-time' },
+  { view: 'champions', label: 'Champions', path: '/all-time/champions' },
+  { view: 'records', label: 'Records', path: '/all-time/records' },
+];
 
 /**
  * Every season at once.
@@ -21,7 +29,7 @@ export type AllTimeTab = 'standings' | 'records';
  * The queries share keys with the season pages, so a season already opened
  * costs nothing here. Rows fill in as seasons resolve.
  */
-export function AllTimeRoute({ tab }: { tab: AllTimeTab }) {
+export function AllTimeRoute({ view }: { view: AllTimeView }) {
   const { chain, chainLoading } = useLeagueContext();
   const results = useAllSeasonModels(chain);
   const playerIndex = usePlayerIndex().data;
@@ -46,32 +54,48 @@ export function AllTimeRoute({ tab }: { tab: AllTimeTab }) {
 
   const pending = chainLoading || results.some((result) => result.isPending);
   const firstError = results.find((result) => result.error)?.error;
+  const played = summaries.filter(({ season }) => season.hasScores).length;
+  const first = summaries.at(-1)?.season.season;
+  const last = summaries.find(({ season }) => season.hasScores)?.season.season;
 
   if (firstError && summaries.length === 0) return <FetchError error={firstError} />;
 
   return (
     <div className="space-y-5">
-      <TabNav
-        label="All-time sections"
-        items={[
-          { to: '/all-time', label: 'All-time standings', active: tab === 'standings' },
-          { to: '/all-time/records', label: 'Records', active: tab === 'records' },
-        ]}
+      <PageHeader
+        title="All-time"
+        meta={
+          pending ? (
+            <span className="flex items-center gap-2">
+              <Spinner className="size-3.5" />
+              Loading seasons, {summaries.length} of {chainLoading ? '?' : chain.length} in
+            </span>
+          ) : (
+            <span>
+              {played} {played === 1 ? 'season' : 'seasons'} played
+              {first && last && first !== last ? `, ${first} to ${last}` : ''}
+            </span>
+          )
+        }
       />
 
-      {pending ? (
-        <p className="flex items-center gap-2 text-xs text-ink-dim">
-          <Spinner className="size-3.5" />
-          Loading seasons, {summaries.length} of {chainLoading ? '?' : chain.length} in
-        </p>
-      ) : null}
+      <TabNav
+        label="All-time sections"
+        items={VIEWS.map((item) => ({
+          to: item.path,
+          label: item.label,
+          active: item.view === view,
+        }))}
+      />
 
       {summaries.length === 0 ? (
         <SkeletonRows rows={8} />
-      ) : tab === 'standings' ? (
-        <StandingsTab summaries={summaries} />
+      ) : view === 'champions' ? (
+        <ChampionsView summaries={summaries} />
+      ) : view === 'records' ? (
+        <RecordsView summaries={summaries} />
       ) : (
-        <RecordsTab summaries={summaries} />
+        <AllTimeStandings summaries={summaries} />
       )}
     </div>
   );

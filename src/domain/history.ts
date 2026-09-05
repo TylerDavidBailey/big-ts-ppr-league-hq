@@ -8,7 +8,7 @@
  * A season still in progress contributes only what is settled: its games so
  * far, but no title, no 1 seed, and no season-total record.
  */
-import type { SeasonAwards } from './awards';
+import { beerDutyTally, type SeasonAwards } from './awards';
 import { superlatives } from './stats';
 import type { SeasonModel, Team } from './types';
 
@@ -409,13 +409,11 @@ export function allTimeRecords(summaries: readonly SeasonSummary[]): AllTimeReco
       'Most beer duties in a season',
       'count',
       'max',
-      finishedRegularSeasons.flatMap(({ season, awards }) => {
-        const tally = new Map<number, number>();
-        for (const entry of awards.beerDuty) {
-          tally.set(entry.rosterId, (tally.get(entry.rosterId) ?? 0) + 1);
-        }
-        return [...tally.entries()].map(([rosterId, count]) => seasonRow(season, rosterId, count));
-      }),
+      finishedRegularSeasons.flatMap(({ season, awards }) =>
+        beerDutyTally(awards.beerDuty).map((entry) =>
+          seasonRow(season, entry.rosterId, entry.value, entry.detail),
+        ),
+      ),
     ),
   ];
 }

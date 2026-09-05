@@ -8,21 +8,21 @@ export interface TabItem {
   active: boolean;
 }
 
-/** The underlined tab strip under a season or the all-time heading. */
+/** The section strip under a page heading. Wraps to a second row on a phone. */
 export function TabNav({ label, items }: { label: string; items: TabItem[] }) {
   return (
-    <nav aria-label={label} className="-mx-5 overflow-x-auto px-5">
-      <ul className="flex min-w-max gap-1 border-b border-hairline">
+    <nav aria-label={label}>
+      <ul className="flex flex-wrap gap-1 rounded-xl border border-hairline bg-surface/60 p-1">
         {items.map((item) => (
           <li key={item.to}>
             <Link
               to={item.to}
               aria-current={item.active ? 'page' : undefined}
               className={cn(
-                'block border-b-2 px-4 py-3 font-display text-sm font-semibold uppercase tracking-wide transition',
+                'block rounded-lg px-3.5 py-2 font-display text-sm font-semibold uppercase tracking-wide transition',
                 item.active
-                  ? 'border-brand text-brand'
-                  : 'border-transparent text-ink-dim hover:text-ink',
+                  ? 'bg-card text-brand shadow-sm shadow-black/30'
+                  : 'text-ink-dim hover:bg-white/[0.04] hover:text-ink',
               )}
             >
               {item.label}

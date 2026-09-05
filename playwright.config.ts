@@ -28,6 +28,11 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // A sandbox with a preinstalled Chromium can point at it instead of
+    // downloading the pinned build. CI leaves this unset.
+    launchOptions: process.env.PW_CHROMIUM_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      : {},
   },
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

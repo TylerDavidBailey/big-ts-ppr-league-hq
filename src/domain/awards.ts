@@ -161,6 +161,35 @@ export function weeklyLowScorers(season: SeasonModel): RankedEntry[] {
   });
 }
 
+/**
+ * How many times each team drew beer duty, most first.
+ *
+ * Reads the settled weekly losers, so the week being played never counts.
+ * Level teams share a place; a tie for most is a tie, not a coin flip.
+ */
+export function beerDutyTally(
+  beerDuty: readonly RankedEntry[],
+  places = Number.POSITIVE_INFINITY,
+): RankedEntry[] {
+  const byRoster = new Map<number, { count: number; weeks: number[] }>();
+  for (const entry of beerDuty) {
+    const tally = byRoster.get(entry.rosterId) ?? { count: 0, weeks: [] };
+    tally.count += 1;
+    if (entry.week !== undefined) tally.weeks.push(entry.week);
+    byRoster.set(entry.rosterId, tally);
+  }
+
+  const candidates = [...byRoster.entries()].map(([rosterId, { count, weeks }]): Candidate => {
+    const sorted = [...weeks].sort((a, b) => a - b);
+    return {
+      rosterId,
+      value: count,
+      detail: sorted.length > 0 ? `Wk ${sorted.join(', ')}` : undefined,
+    };
+  });
+  return rankPlaces(candidates, places);
+}
+
 /** Places 1 to 3, read from the bracket's placement games. */
 export const podium = (season: SeasonModel): Placement[] =>
   season.winnersBracket.placements.filter((placement) => placement.place <= 3);

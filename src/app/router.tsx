@@ -6,17 +6,23 @@ import { SeasonRoute } from '@/features/season/SeasonRoute';
 
 /**
  * `/` is the newest season, so the link people share never goes stale. A year
- * reaches any season; `all-time` reads them all.
+ * reaches any season, and each season has one route per section. `all-time`
+ * reads every season at once.
  */
 export function AppRoutes() {
   return (
     <Routes>
       <Route element={<LeaguePage />}>
-        <Route index element={<SeasonRoute tab="awards" />} />
-        <Route path="all-time" element={<AllTimeRoute tab="standings" />} />
-        <Route path="all-time/records" element={<AllTimeRoute tab="records" />} />
-        <Route path=":season" element={<SeasonRoute tab="awards" />} />
-        <Route path=":season/standings" element={<SeasonRoute tab="standings" />} />
+        <Route index element={<SeasonRoute view="overview" />} />
+        <Route path="all-time" element={<AllTimeRoute view="standings" />} />
+        <Route path="all-time/champions" element={<AllTimeRoute view="champions" />} />
+        <Route path="all-time/records" element={<AllTimeRoute view="records" />} />
+        <Route path=":season" element={<SeasonRoute view="overview" />} />
+        <Route path=":season/awards" element={<SeasonRoute view="awards" />} />
+        <Route path=":season/beer-duty" element={<SeasonRoute view="beer-duty" />} />
+        <Route path=":season/standings" element={<SeasonRoute view="standings" />} />
+        <Route path=":season/stats" element={<SeasonRoute view="stats" />} />
+        <Route path=":season/rules" element={<SeasonRoute view="rules" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

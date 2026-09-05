@@ -22,7 +22,7 @@ test.describe('live Sleeper API @live', () => {
   });
 
   test('resolves awards for a finished season with a real player name', async ({ page }) => {
-    await page.goto('/#/2025');
+    await page.goto('/#/2025/awards');
     await expect(page.getByRole('heading', { name: 'Highest Starter Week' })).toBeVisible({
       timeout: 20_000,
     });
