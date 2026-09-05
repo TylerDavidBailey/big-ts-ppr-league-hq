@@ -16,9 +16,13 @@ test.describe('live Sleeper API @live', () => {
       timeout: 20_000,
     });
     // The chain reaches back through several seasons via previous_league_id.
-    await expect(page.getByRole('link', { name: '2023', exact: true })).toBeVisible({
-      timeout: 20_000,
-    });
+    const trigger = page.getByRole('navigation', { name: 'Season' }).getByRole('button');
+    await expect(trigger).toBeVisible({ timeout: 20_000 });
+    await trigger.click();
+
+    await expect(
+      page.getByRole('list', { name: 'Seasons' }).getByRole('link', { name: '2023', exact: true }),
+    ).toBeVisible({ timeout: 20_000 });
   });
 
   test('resolves awards for a finished season with a real player name', async ({ page }) => {

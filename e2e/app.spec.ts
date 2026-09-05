@@ -12,7 +12,7 @@ test.describe('the landing page', () => {
 
     await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible();
     // `exact` matches the status badge, not the sentence next to it.
-    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('Pre-draft', { exact: true })).toBeVisible();
     await expect(page.getByText('No games played yet')).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'Rules and payouts' })).toBeVisible();
@@ -29,12 +29,40 @@ test.describe('the landing page', () => {
     await expect(page.getByRole('heading', { name: 'Managers' })).toBeVisible();
   });
 
-  test('lists every season in the nav, newest first', async ({ page }) => {
+  test('keeps every season behind one switcher, with all-time beside it', async ({ page }) => {
     await page.goto('/');
 
-    const years = page.getByRole('navigation', { name: 'Season', exact: true }).getByRole('link');
-    await expect(years).toHaveText(['2026', '2025', '2024', 'All-time']);
+    const nav = page.getByRole('navigation', { name: 'Season', exact: true });
+    const trigger = nav.getByRole('button', { name: /2026/ });
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    // Closed, the bar carries one link: the all-time view, which is not a season.
+    await expect(nav.getByRole('link')).toHaveText(['All-time']);
+
+    await trigger.click();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    const years = page.getByRole('list', { name: 'Seasons' }).getByRole('link');
+    await expect(years).toHaveText([/2026/, /2025/, /2024/]);
     await expect(years.first()).toHaveAttribute('aria-current', 'page');
+  });
+
+  test('drives the switcher from the keyboard and keeps the section', async ({ page }) => {
+    await page.goto('/#/2025/standings');
+    const trigger = page.getByRole('button', { name: /2025/ });
+
+    // Down opens it onto the season being read, escape hands focus back.
+    await trigger.press('ArrowDown');
+    const years = page.getByRole('list', { name: 'Seasons' }).getByRole('link');
+    await expect(years.nth(1)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    // Switching year stays on standings rather than dropping to the overview.
+    await trigger.click();
+    await years.filter({ hasText: '2024' }).click();
+    await expect(page).toHaveURL(/#\/2024\/standings$/);
+    await expect(page.getByRole('button', { name: /2024/ })).toBeVisible();
   });
 
   test('offers every section of the season', async ({ page }) => {
@@ -58,9 +86,11 @@ test.describe('a new season the config does not know about', () => {
     await mockSleeper(page, { newerSeasonExists: true });
     await page.goto('/');
 
-    await expect(page.getByText('Pre-draft', { exact: true })).toBeVisible();
-    const years = page.getByRole('navigation', { name: 'Season', exact: true }).getByRole('link');
-    await expect(years).toHaveText(['2026', '2025', '2024', 'All-time']);
+    await expect(page.getByRole('main').getByText('Pre-draft', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: /2026/ }).click();
+    const years = page.getByRole('list', { name: 'Seasons' }).getByRole('link');
+    await expect(years).toHaveText([/2026/, /2025/, /2024/]);
     await expect(years.first()).toHaveAttribute('aria-current', 'page');
 
     // The configured season is still reachable by year.

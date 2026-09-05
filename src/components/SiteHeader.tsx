@@ -6,15 +6,15 @@ import { LEAGUE } from '@/league.config';
 interface SiteHeaderProps {
   /** The league avatar, rendered by the shell once it knows the league. */
   avatar: ReactNode;
-  /** The season pills. Kept outside the brand link so it stays its own landmark. */
+  /** The season switcher and all-time link. Its own landmark, so it sits outside the brand link. */
   nav: ReactNode;
 }
 
 /**
  * The sticky top bar: brand on the left, seasons on the right.
  *
- * The site name is the page's only `h1`, so every route shares one. On a
- * phone the season pills drop to their own scrollable row.
+ * The site name is the page's only `h1`, so every route shares one. The nav
+ * stays two buttons wide at every width, so it never needs a row of its own.
  */
 export function SiteHeader({ avatar, nav }: SiteHeaderProps) {
   return (
@@ -46,7 +46,7 @@ export function SiteHeader({ avatar, nav }: SiteHeaderProps) {
           </a>
         </div>
 
-        <div className="-mx-5 w-[calc(100%+2.5rem)] px-5 lg:mx-0 lg:w-auto lg:px-0">{nav}</div>
+        <div className="ml-auto sm:ml-0">{nav}</div>
       </div>
     </header>
   );
