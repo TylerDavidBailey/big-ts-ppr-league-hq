@@ -257,6 +257,14 @@ export function buildSeason(raw: RawSeasonData): SeasonModel {
 
   const playoffWeekStart = league.settings.playoff_week_start ?? DEFAULT_PLAYOFF_WEEK_START;
   const regularSeasonEndWeek = Math.max(1, playoffWeekStart - 1);
+  const playoffTeams = league.settings.playoff_teams ?? 0;
+  // The championship week comes from the settings, not from the weeks fetched.
+  // A pre-draft league has no weeks at all, and a live one only has the weeks
+  // played so far, so either would otherwise report a playoff span of one week.
+  const playoffEndWeek =
+    playoffTeams >= 2
+      ? lastWeekOfSeason(playoffWeekStart, league.settings.playoff_round_type, playoffTeams)
+      : playoffWeekStart;
   const liveWeek = inProgressWeek(league, raw.nflState);
 
   const teams = buildTeams(rosters, users);
@@ -291,7 +299,8 @@ export function buildSeason(raw: RawSeasonData): SeasonModel {
 
     regularSeasonEndWeek,
     playoffWeekStart,
-    playoffTeams: league.settings.playoff_teams ?? 0,
+    playoffEndWeek,
+    playoffTeams,
 
     weeks,
     regularSeasonWeeks: settledRegularSeasonWeeks,

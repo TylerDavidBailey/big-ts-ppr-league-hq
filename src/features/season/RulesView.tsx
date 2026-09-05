@@ -4,11 +4,16 @@ import type { SeasonModel } from '@/domain/types';
 
 /** The shape of the season, read from Sleeper's league settings. */
 function SeasonFormat({ season }: { season: SeasonModel }) {
-  const lastWeek = season.weeks.at(-1)?.week ?? season.playoffWeekStart;
+  // The playoff span comes from the league's settings, so it reads the same
+  // before a game is played as it does in December.
+  const playoffWeeks =
+    season.playoffEndWeek > season.playoffWeekStart
+      ? `weeks ${season.playoffWeekStart} to ${season.playoffEndWeek}`
+      : `week ${season.playoffWeekStart}`;
   const rows: [string, string][] = [
     ['Teams', String(season.teams.length)],
     ['Regular season', `Weeks 1 to ${season.regularSeasonEndWeek}`],
-    ['Playoffs', `${season.playoffTeams} teams, weeks ${season.playoffWeekStart} to ${lastWeek}`],
+    ['Playoffs', `${season.playoffTeams} teams, ${playoffWeeks}`],
     ['Scoring', season.usesMedianScoring ? 'Head to head, plus the weekly median' : 'Head to head'],
   ];
 

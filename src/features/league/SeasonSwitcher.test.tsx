@@ -1,6 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
 import { SeasonSwitcher } from './SeasonSwitcher';
@@ -17,6 +17,12 @@ const renderAt = (path: string) =>
       <SeasonSwitcher chain={CHAIN} loading={false} />
     </MemoryRouter>,
   );
+
+/** The route the switcher navigated to. */
+function Here() {
+  const { pathname } = useLocation();
+  return <span data-testid="path">{pathname}</span>;
+}
 
 const trigger = () => screen.getByRole('button');
 const seasons = () => within(screen.getByRole('list', { name: 'Seasons' })).getAllByRole('link');
@@ -126,6 +132,32 @@ describe('SeasonSwitcher', () => {
 
     await user.click(screen.getByRole('button', { name: 'elsewhere' }));
     expect(screen.queryByRole('list', { name: 'Seasons' })).toBeNull();
+  });
+
+  it('follows a row that is pressed without being focused', async () => {
+    // Safari does not focus a link it is pressing, so the press blurs the row
+    // the panel opened on and hands focus to nothing. Closing on that blur
+    // unmounted the row before its click landed, and the season never opened.
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <SeasonSwitcher chain={CHAIN} loading={false} />
+        <Routes>
+          <Route path="*" element={<Here />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(trigger());
+    const row = seasons()[1]!;
+
+    fireEvent.pointerDown(row);
+    // The press takes focus off the row and gives it to nothing.
+    fireEvent.focusOut(row, { relatedTarget: null });
+    expect(screen.getByRole('list', { name: 'Seasons' })).toBeInTheDocument();
+
+    fireEvent.click(row);
+    expect(screen.getByTestId('path')).toHaveTextContent('/2025');
   });
 
   it('stands in a skeleton until the chain resolves', () => {
