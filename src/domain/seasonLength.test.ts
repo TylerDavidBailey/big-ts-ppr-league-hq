@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { MAX_SEASON_WEEK, lastWeekOfSeason, weeksPerPlayoffRound } from './buildSeason';
+import {
+  MAX_SEASON_WEEK,
+  lastWeekOfSeason,
+  playoffRounds,
+  weeksPerPlayoffRound,
+} from './buildSeason';
 
 describe('weeksPerPlayoffRound', () => {
   it('is one week per round by default', () => {
@@ -38,5 +43,33 @@ describe('lastWeekOfSeason', () => {
 
   it('still reaches the playoffs for a short season', () => {
     expect(lastWeekOfSeason(1, 0)).toBeGreaterThanOrEqual(1);
+  });
+
+  it('ends on the championship week when the bracket size is known', () => {
+    // Six teams play three rounds: weeks 15, 16 and 17.
+    expect(lastWeekOfSeason(15, 0, 6)).toBe(17);
+    expect(lastWeekOfSeason(15, 0, 4)).toBe(16);
+    expect(lastWeekOfSeason(15, 0, 12)).toBe(18);
+    expect(lastWeekOfSeason(15, 2, 6)).toBe(20);
+  });
+
+  it('falls back to the widest bracket for a nonsense team count', () => {
+    expect(lastWeekOfSeason(15, 0, 0)).toBe(19);
+    expect(lastWeekOfSeason(15, 0, 1)).toBe(19);
+  });
+});
+
+describe('playoffRounds', () => {
+  it('is the number of knockout rounds a bracket needs', () => {
+    expect(playoffRounds(2)).toBe(1);
+    expect(playoffRounds(4)).toBe(2);
+    expect(playoffRounds(6)).toBe(3);
+    expect(playoffRounds(8)).toBe(3);
+    expect(playoffRounds(12)).toBe(4);
+  });
+
+  it('caps at the widest bracket Sleeper offers', () => {
+    expect(playoffRounds(32)).toBe(4);
+    expect(playoffRounds(undefined)).toBe(4);
   });
 });

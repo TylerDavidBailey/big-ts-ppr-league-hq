@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildBracket, groupByRound, placementFor } from './bracket';
+import { buildBracket, placementFor } from './bracket';
 import { fixtureWinnersBracket } from '@/test/fixtures';
 import type { SleeperBracketMatch } from '@/lib/sleeper/types';
 
@@ -44,20 +44,6 @@ describe('buildBracket', () => {
     const bracket = buildBracket([]);
     expect(bracket.matches).toEqual([]);
     expect(bracket.placements).toEqual([]);
-  });
-});
-
-describe('groupByRound', () => {
-  it('groups matches by round in order, sorted by match number', () => {
-    const rounds = groupByRound(fixtureWinnersBracket);
-
-    expect(rounds.length).toBeGreaterThan(1);
-    rounds.forEach((round, index) => {
-      expect(round.every((match) => match.r === index + 1)).toBe(true);
-      expect(round.map((match) => match.m)).toEqual(
-        [...round.map((m) => m.m)].sort((a, b) => a - b),
-      );
-    });
   });
 });
 

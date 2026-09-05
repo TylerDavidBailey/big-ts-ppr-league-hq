@@ -13,23 +13,20 @@ The API is public and read-only. It needs no key and no account.
 Every response carries `access-control-allow-origin: *`, so the browser calls it directly.
 The app has no backend and no proxy.
 
-Sleeper asks callers to stay under 1000 requests per minute. One full season costs about
-24 requests, or 28 for a league whose playoff rounds run two weeks, plus one request per
-prior season when walking the chain.
+Sleeper asks callers to stay under 1000 requests per minute. One finished season costs 21
+requests, a pre-draft season costs 2, and the chain walk costs one per season.
 
 ## Endpoints the app uses
 
-| Endpoint                                  | Returns                                                   |
-| ----------------------------------------- | --------------------------------------------------------- |
-| `GET /state/nfl`                          | `week`, `display_week`, `season`, `season_type`           |
-| `GET /league/{id}`                        | One league, including `settings` and `previous_league_id` |
-| `GET /league/{id}/users`                  | Managers in the league                                    |
-| `GET /league/{id}/rosters`                | Rosters with season totals                                |
-| `GET /league/{id}/matchups/{week}`        | One week of scores for every roster                       |
-| `GET /league/{id}/winners_bracket`        | Championship bracket                                      |
-| `GET /league/{id}/losers_bracket`         | Consolation bracket                                       |
-| `GET /user/{username}`                    | A user's `user_id`                                        |
-| `GET /user/{userId}/leagues/nfl/{season}` | That user's leagues for a season                          |
+| Endpoint                           | Returns                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| `GET /state/nfl`                   | `week`, `display_week`, `season`, `season_type`           |
+| `GET /league/{id}`                 | One league, including `settings` and `previous_league_id` |
+| `GET /league/{id}/users`           | Managers in the league                                    |
+| `GET /league/{id}/rosters`         | Rosters with season totals                                |
+| `GET /league/{id}/matchups/{week}` | One week of scores for every roster                       |
+| `GET /league/{id}/winners_bracket` | Championship bracket                                      |
+| `GET /league/{id}/losers_bracket`  | Consolation bracket                                       |
 
 `src/lib/sleeper/endpoints.ts` wraps each one.
 
@@ -59,10 +56,20 @@ Compute it as `fpts + fpts_decimal / 100`. The same split applies to `fpts_again
 In a matchup row, `starters` holds player ids in lineup order and `starters_points` holds
 their scores at the same indexes. Position `n` in one matches position `n` in the other.
 
-`players_points` covers the bench as well, so a per-starter award must read
-`starters_points` and never `players_points`.
+`players_points` covers the whole roster, bench included. A per-starter award must read
+`starters_points` and never `players_points`. Bench points are `players_points` for every
+id in `players` that is not in `starters`.
 
 Sleeper pads empty lineup slots with the player id `"0"`. Drop those.
+
+### `fpts` and `ppts` are regular-season totals
+
+Roster `settings.fpts` covers weeks 1 through `playoff_week_start - 1` and nothing after.
+Verified on the reference league: the reported 1805.78 equals the sum of weeks 1 to 14,
+while the sum of all 17 played weeks is 2239.98.
+
+`ppts` is the total a perfect lineup would have scored over the same weeks. Lineup
+efficiency is `fpts / ppts` with no lineup solver.
 
 ### The regular season ends at `playoff_week_start - 1`
 
@@ -97,8 +104,9 @@ user's `display_name`, which is what Sleeper's own UI shows.
 Each season is a separate league with its own id. `previous_league_id` points at the prior
 season and is `null` on the first one.
 
-The reference league chains 2026 to 2025 to 2024 to 2023. `getLeagueChain` walks the chain
-with a visited set and a 60-season cycle guard, so bad data cannot loop forever.
+The league chains 2026 to 2025 to 2024 to 2023. `getLeagueChain` starts from the
+already-fetched newest season and walks back with a visited set and a 60-season cycle
+guard, so bad data cannot loop forever.
 
 ### `/players/nfl` is 14.6 MB
 

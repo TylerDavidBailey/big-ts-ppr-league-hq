@@ -39,8 +39,17 @@ const LEAGUE_STATUS_LABEL: Record<string, string> = {
 export const statusLabel = (status: string): string =>
   LEAGUE_STATUS_LABEL[status] ?? status.replace(/_/g, ' ');
 
-/** Sleeper league ids are large numeric strings. */
-export const isValidLeagueId = (value: string): boolean => /^\d{6,25}$/.test(value.trim());
+/** Whole dollars, e.g. `$1,500`. */
+export const formatMoney = (dollars: number): string =>
+  dollars.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+/** `0.6429` as `64.3%`. */
+export const formatPercent = (ratio: number, digits = 1): string =>
+  `${(ratio * 100).toFixed(digits)}%`;
+
+/** A signed number with two decimals, e.g. `+1.50` or `-0.25`. */
+export const formatSigned = (value: number): string =>
+  `${value > 0 ? '+' : value < 0 ? '-' : ''}${Math.abs(value).toFixed(2)}`;
 
 export function formatRelativeTime(timestamp: number, now = Date.now()): string {
   const seconds = Math.round((timestamp - now) / 1000);

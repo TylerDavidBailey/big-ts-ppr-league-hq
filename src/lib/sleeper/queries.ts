@@ -1,29 +1,19 @@
 /**
  * TanStack Query bindings for the Sleeper endpoints.
  *
- * Each endpoint gets its own query so the season page can render progressively
- * and so switching seasons reuses anything already cached. A whole season is
- * roughly two dozen requests, comfortably inside Sleeper's rate guidance.
+ * A season is one query, so the season tabs and the all-time tabs share a
+ * single cache entry per league id. Completed seasons never change and are
+ * cached for the visit; the live season is polled while the tab is open.
  */
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import {
-  getLeague,
-  getLeagueChain,
-  getLeagueRosters,
-  getLeagueUsers,
-  getLosersBracket,
-  getMatchups,
-  getNflState,
-  getUserByName,
-  getUserLeagues,
-  getWinnersBracket,
-} from './endpoints';
 import { NotFoundError } from './client';
-import type { SleeperLeague, SleeperMatchup } from './types';
-import { lastWeekOfSeason } from '@/domain/buildSeason';
+import { getLeague, getLeagueChain } from './endpoints';
+import { fetchSeason } from './season';
+import type { SleeperLeague } from './types';
+import type { SeasonModel } from '@/domain/types';
+import { LEAGUE } from '@/league.config';
 import { loadPlayerIndex } from '@/lib/players';
-import { rememberChain, resolveChainHead } from '@/lib/storage';
 
 /** Completed seasons never change; live ones are refetched on a short leash. */
 const FOREVER = Number.POSITIVE_INFINITY;
@@ -31,49 +21,14 @@ const FIVE_MINUTES = 5 * 60 * 1000;
 const TWO_MINUTES = 2 * 60 * 1000;
 
 export const queryKeys = {
-  nflState: () => ['nfl-state'] as const,
   playerIndex: () => ['player-index'] as const,
   league: (leagueId: string) => ['league', leagueId] as const,
-  leagueChain: (leagueId: string) => ['league-chain', leagueId] as const,
-  users: (leagueId: string) => ['league', leagueId, 'users'] as const,
-  rosters: (leagueId: string) => ['league', leagueId, 'rosters'] as const,
-  matchups: (leagueId: string, week: number) => ['league', leagueId, 'matchups', week] as const,
-  winnersBracket: (leagueId: string) => ['league', leagueId, 'winners-bracket'] as const,
-  losersBracket: (leagueId: string) => ['league', leagueId, 'losers-bracket'] as const,
-  userByName: (username: string) => ['user', username] as const,
-  userLeagues: (userId: string, season: string) => ['user', userId, 'leagues', season] as const,
+  leagueChain: () => ['league-chain', LEAGUE.leagueId] as const,
+  season: (leagueId: string) => ['season', leagueId] as const,
 } as const;
 
-/**
- * Narrow an id inside a `queryFn`.
- *
- * Every query below is gated by `enabled`, so the id is present whenever the
- * function runs; TypeScript cannot see that, and a thrown error is a truthful
- * way to say so without scattering non-null assertions.
- */
-function requireId(value: string | undefined, name: string): string {
-  if (!value) throw new Error(`${name} is required`);
-  return value;
-}
-
-const staleTimeFor = (league: SleeperLeague | undefined) =>
-  league?.status === 'complete' ? FOREVER : FIVE_MINUTES;
-
-/**
- * Poll a live league so scores move without a reload.
- *
- * A finished season never changes, so it is never polled. `false` is what
- * TanStack Query expects to mean "do not poll".
- */
-const refetchIntervalFor = (league: SleeperLeague | undefined): number | false =>
-  league?.status === 'in_season' ? TWO_MINUTES : false;
-
-export const useNflState = () =>
-  useQuery({
-    queryKey: queryKeys.nflState(),
-    queryFn: ({ signal }) => getNflState(signal),
-    staleTime: FIVE_MINUTES,
-  });
+const notFoundRetry = (failureCount: number, error: Error) =>
+  !(error instanceof NotFoundError) && failureCount < 2;
 
 export const usePlayerIndex = () =>
   useQuery({
@@ -82,128 +37,74 @@ export const usePlayerIndex = () =>
     staleTime: FOREVER,
   });
 
-export const useLeague = (leagueId: string | undefined) =>
+/** The configured league, which is the newest season. */
+export const useCurrentLeague = () =>
   useQuery({
-    queryKey: queryKeys.league(leagueId ?? ''),
-    queryFn: ({ signal }) => getLeague(requireId(leagueId, 'leagueId'), signal),
-    enabled: Boolean(leagueId),
+    queryKey: queryKeys.league(LEAGUE.leagueId),
+    queryFn: ({ signal }) => getLeague(LEAGUE.leagueId, signal),
     staleTime: FIVE_MINUTES,
-    // A bad league id will never resolve; retrying just delays the error state.
-    retry: (failureCount, error) => !(error instanceof NotFoundError) && failureCount < 2,
+    retry: notFoundRetry,
   });
 
 /**
- * Every season of this league, most recent first.
+ * Every season of the league, newest first.
  *
- * `previous_league_id` only points backwards, so opening a 2025 link directly
- * would hide the 2026 season. Each walk records the newest season for every
- * league it passes, and a later visit starts from that newest season instead.
- * When the recorded head turns out to be wrong or its chain no longer contains
- * this league, the walk falls back to starting here.
+ * The walk starts from the already-fetched newest season and follows
+ * `previous_league_id` back to the first one, so the landing page never waits
+ * on it: the current season renders as soon as its own league resolves.
  */
-export const useLeagueChain = (leagueId: string | undefined) =>
+export const useLeagueChain = (head: SleeperLeague | undefined) =>
   useQuery({
-    queryKey: queryKeys.leagueChain(leagueId ?? ''),
-    queryFn: async ({ signal }) => {
-      const id = requireId(leagueId, 'leagueId');
-      const head = resolveChainHead(id);
-
-      if (head !== id) {
-        try {
-          const fromHead = await getLeagueChain(head, signal);
-          if (fromHead.some((league) => league.league_id === id)) {
-            rememberChain(fromHead);
-            return fromHead;
-          }
-        } catch (error) {
-          if (!(error instanceof NotFoundError)) throw error;
-        }
-      }
-
-      const chain = await getLeagueChain(id, signal);
-      rememberChain(chain);
-      return chain;
-    },
-    enabled: Boolean(leagueId),
+    queryKey: queryKeys.leagueChain(),
+    queryFn: ({ signal }) => getLeagueChain(head ?? emptyLeague, signal),
+    enabled: Boolean(head),
     staleTime: FIVE_MINUTES,
-    retry: (failureCount, error) => !(error instanceof NotFoundError) && failureCount < 2,
-  });
-
-export const useLeagueUsers = (leagueId: string | undefined, league?: SleeperLeague) =>
-  useQuery({
-    queryKey: queryKeys.users(leagueId ?? ''),
-    queryFn: ({ signal }) => getLeagueUsers(requireId(leagueId, 'leagueId'), signal),
-    // Gated on the league resolving, so a bad id costs one request, not five.
-    enabled: Boolean(leagueId) && Boolean(league),
-    staleTime: staleTimeFor(league),
-  });
-
-export const useLeagueRosters = (leagueId: string | undefined, league?: SleeperLeague) =>
-  useQuery({
-    queryKey: queryKeys.rosters(leagueId ?? ''),
-    queryFn: ({ signal }) => getLeagueRosters(requireId(leagueId, 'leagueId'), signal),
-    enabled: Boolean(leagueId) && Boolean(league),
-    staleTime: staleTimeFor(league),
-  });
-
-export const useWinnersBracket = (leagueId: string | undefined, league?: SleeperLeague) =>
-  useQuery({
-    queryKey: queryKeys.winnersBracket(leagueId ?? ''),
-    queryFn: ({ signal }) => getWinnersBracket(requireId(leagueId, 'leagueId'), signal),
-    enabled: Boolean(leagueId) && Boolean(league),
-    staleTime: staleTimeFor(league),
-  });
-
-export const useLosersBracket = (leagueId: string | undefined, league?: SleeperLeague) =>
-  useQuery({
-    queryKey: queryKeys.losersBracket(leagueId ?? ''),
-    queryFn: ({ signal }) => getLosersBracket(requireId(leagueId, 'leagueId'), signal),
-    enabled: Boolean(leagueId) && Boolean(league),
-    staleTime: staleTimeFor(league),
+    retry: notFoundRetry,
   });
 
 /**
- * Fetch every week of the season in parallel.
+ * Poll a live league so scores move without a reload.
  *
- * The range runs from week 1 through the end of this league's playoffs, which
- * `lastWeekOfSeason` derives from its own settings. Unplayed weeks come back as
- * `[]`, which `buildSeason` reads
- * as "not played", so there is nothing to skip and no need to know the current
- * week ahead of time.
+ * A finished season never changes, so it is never polled. `false` is what
+ * TanStack Query expects to mean "do not poll".
  */
-export function useSeasonMatchups(
-  leagueId: string | undefined,
-  league: SleeperLeague | undefined,
-): UseQueryResult<SleeperMatchup[]>[] {
-  const playoffWeekStart = league?.settings.playoff_week_start ?? 15;
-  const lastWeek = lastWeekOfSeason(playoffWeekStart, league?.settings.playoff_round_type);
-  const weeks = league ? Array.from({ length: lastWeek }, (_, index) => index + 1) : [];
+const refetchIntervalFor = (league: SleeperLeague): number | false =>
+  league.status === 'in_season' ? TWO_MINUTES : false;
 
-  return useQueries({
-    queries: weeks.map((week) => ({
-      queryKey: queryKeys.matchups(leagueId ?? '', week),
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        getMatchups(requireId(leagueId, 'leagueId'), week, signal),
-      enabled: Boolean(leagueId) && Boolean(league),
-      staleTime: staleTimeFor(league),
-      refetchInterval: refetchIntervalFor(league),
-    })),
-  });
-}
+const seasonQuery = (league: SleeperLeague) => ({
+  queryKey: queryKeys.season(league.league_id),
+  queryFn: ({ signal }: { signal: AbortSignal }) => fetchSeason(league, signal),
+  staleTime: league.status === 'complete' ? FOREVER : FIVE_MINUTES,
+  refetchInterval: refetchIntervalFor(league),
+  retry: notFoundRetry,
+});
 
-export const useUserByName = (username: string, enabled: boolean) =>
+export const useSeasonModel = (league: SleeperLeague | undefined) =>
   useQuery({
-    queryKey: queryKeys.userByName(username),
-    queryFn: ({ signal }) => getUserByName(username, signal),
-    enabled: enabled && username.trim().length > 0,
-    retry: (failureCount, error) => !(error instanceof NotFoundError) && failureCount < 2,
+    ...seasonQuery(league ?? emptyLeague),
+    enabled: Boolean(league),
   });
 
-export const useUserLeagues = (userId: string | undefined, season: string | undefined) =>
-  useQuery({
-    queryKey: queryKeys.userLeagues(userId ?? '', season ?? ''),
-    queryFn: ({ signal }) =>
-      getUserLeagues(requireId(userId, 'userId'), requireId(season, 'season'), signal),
-    enabled: Boolean(userId) && Boolean(season),
-    staleTime: FIVE_MINUTES,
-  });
+/** One query per season, sharing keys with `useSeasonModel`. */
+export const useAllSeasonModels = (
+  chain: readonly SleeperLeague[],
+): UseQueryResult<SeasonModel>[] =>
+  useQueries({ queries: chain.map((league) => seasonQuery(league)) });
+
+/** Placeholder so a disabled season query has a stable key. Never fetched. */
+const emptyLeague: SleeperLeague = {
+  league_id: '',
+  name: '',
+  season: '',
+  season_type: '',
+  status: 'pre_draft',
+  sport: 'nfl',
+  avatar: null,
+  total_rosters: 0,
+  roster_positions: [],
+  previous_league_id: null,
+  draft_id: null,
+  settings: {},
+  scoring_settings: {},
+  metadata: null,
+};

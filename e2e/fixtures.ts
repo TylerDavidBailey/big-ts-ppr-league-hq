@@ -7,7 +7,7 @@
  */
 import type { Page, Route } from '@playwright/test';
 
-import { EXAMPLE_LEAGUE_ID } from '../src/lib/exampleLeague';
+import { LEAGUE } from '../src/league.config';
 
 import league from '../src/test/fixtures/league.json' with { type: 'json' };
 import losersBracket from '../src/test/fixtures/losersBracket.json' with { type: 'json' };
@@ -16,17 +16,12 @@ import rosters from '../src/test/fixtures/rosters.json' with { type: 'json' };
 import users from '../src/test/fixtures/users.json' with { type: 'json' };
 import winnersBracket from '../src/test/fixtures/winnersBracket.json' with { type: 'json' };
 
+/** The configured league, served as the 2026 pre-draft season. */
+export const CURRENT_LEAGUE_ID = LEAGUE.leagueId;
 /** The finished 2025 season the fixtures were captured from. */
 export const FINISHED_LEAGUE_ID = league.league_id;
-/**
- * The 2026 season, served as pre-draft so the empty states can be tested.
- *
- * Synthetic, in the shape of a Sleeper id, to match the anonymised fixtures.
- */
-export const PRE_DRAFT_LEAGUE_ID = '8000000000000000003';
 /** The 2024 season, which ends the chain. Taken from the fixture's own link. */
 export const OLDEST_LEAGUE_ID = league.previous_league_id;
-export const UNKNOWN_LEAGUE_ID = '12345';
 
 const json = (route: Route, body: unknown) =>
   route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
@@ -46,17 +41,14 @@ type LeagueResponse = Omit<typeof league, 'previous_league_id'> & {
 };
 
 const seasons: Record<string, LeagueResponse> = {
-  [PRE_DRAFT_LEAGUE_ID]: {
+  [CURRENT_LEAGUE_ID]: {
     ...league,
-    league_id: PRE_DRAFT_LEAGUE_ID,
+    league_id: CURRENT_LEAGUE_ID,
     season: '2026',
     status: 'pre_draft',
     previous_league_id: FINISHED_LEAGUE_ID,
   },
   [FINISHED_LEAGUE_ID]: league,
-  // The landing page's "example league" link points at a real public league,
-  // so the mock answers that id with the finished-season fixture.
-  [EXAMPLE_LEAGUE_ID]: { ...league, league_id: EXAMPLE_LEAGUE_ID },
   [OLDEST_LEAGUE_ID]: {
     ...league,
     league_id: OLDEST_LEAGUE_ID,
@@ -65,7 +57,12 @@ const seasons: Record<string, LeagueResponse> = {
   },
 };
 
-export async function mockSleeper(page: Page): Promise<void> {
+export interface MockOptions {
+  /** Answer the configured league with a server error, to test the failure state. */
+  failCurrentLeague?: boolean;
+}
+
+export async function mockSleeper(page: Page, options: MockOptions = {}): Promise<void> {
   await page.route('https://api.sleeper.app/**', async (route) => {
     const path = new URL(route.request().url()).pathname;
 
@@ -85,10 +82,14 @@ export async function mockSleeper(page: Page): Promise<void> {
     if (!leagueMatch) return notFound(route);
 
     const [, id, , resource] = leagueMatch;
+    if (options.failCurrentLeague && id === CURRENT_LEAGUE_ID) {
+      return route.fulfill({ status: 500, contentType: 'text/plain', body: 'boom' });
+    }
+
     const season = id ? seasons[id] : undefined;
     if (!season) return notFound(route);
 
-    const isPreDraft = id === PRE_DRAFT_LEAGUE_ID;
+    const isPreDraft = id === CURRENT_LEAGUE_ID;
 
     switch (resource) {
       case undefined:

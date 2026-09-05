@@ -13,7 +13,6 @@ import type {
   SleeperNflState,
   SleeperRoster,
   SleeperUser,
-  SleeperUserSummary,
 } from './types';
 
 export const getNflState = (signal?: AbortSignal) =>
@@ -59,28 +58,23 @@ export const getWinnersBracket = (leagueId: string, signal?: AbortSignal) =>
 export const getLosersBracket = (leagueId: string, signal?: AbortSignal) =>
   getBracket(leagueId, 'losers_bracket', signal);
 
-export const getUserByName = (username: string, signal?: AbortSignal) =>
-  fetchSleeper<SleeperUserSummary>(`/user/${encodeURIComponent(username)}`, { signal });
-
-export const getUserLeagues = (userId: string, season: string, signal?: AbortSignal) =>
-  fetchSleeper<SleeperLeague[]>(`/user/${userId}/leagues/nfl/${season}`, { signal });
-
 /**
  * Walk `previous_league_id` back through every prior season of a league.
  *
- * Most recent season first. `maxSeasons` is a cycle guard rather than a real
- * limit: a `seen` set already stops a loop, and this caps the damage if Sleeper
- * ever returns a chain that grows without repeating. Sleeper launched in 2017,
- * so the ceiling is decades of headroom.
+ * Starts from an already-fetched newest season, so the walk costs one request
+ * per earlier season and nothing for the head. Most recent season first.
+ * `maxSeasons` is a cycle guard rather than a real limit: a `seen` set already
+ * stops a loop, and this caps the damage if Sleeper ever returns a chain that
+ * grows without repeating.
  */
 export async function getLeagueChain(
-  leagueId: string,
+  head: SleeperLeague,
   signal?: AbortSignal,
   maxSeasons = 60,
 ): Promise<SleeperLeague[]> {
-  const chain: SleeperLeague[] = [];
-  const seen = new Set<string>();
-  let cursor: string | null = leagueId;
+  const chain: SleeperLeague[] = [head];
+  const seen = new Set<string>([head.league_id]);
+  let cursor: string | null = head.previous_league_id;
 
   while (cursor && !seen.has(cursor) && chain.length < maxSeasons) {
     seen.add(cursor);

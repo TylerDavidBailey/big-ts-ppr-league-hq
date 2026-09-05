@@ -12,7 +12,7 @@ const team = (rosterId: number): Team => ({
   coManagerNames: [],
   userId: String(rosterId),
   avatarId: null,
-  reported: { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 },
+  reported: { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0, maxPointsFor: 0 },
 });
 
 /** One head-to-head week between rosters 1 and 2. */
@@ -30,6 +30,7 @@ const week = (weekNumber: number, oneScores: number, twoScores: number): Week =>
       opponentPoints: twoScores,
       outcome: oneScores > twoScores ? 'win' : oneScores < twoScores ? 'loss' : 'tie',
       starters: [],
+      bench: [],
     },
     {
       rosterId: 2,
@@ -39,6 +40,7 @@ const week = (weekNumber: number, oneScores: number, twoScores: number): Week =>
       opponentPoints: oneScores,
       outcome: twoScores > oneScores ? 'win' : twoScores < oneScores ? 'loss' : 'tie',
       starters: [],
+      bench: [],
     },
   ],
 });

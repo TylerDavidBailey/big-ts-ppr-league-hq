@@ -7,7 +7,7 @@
  */
 import { buildBracket } from './bracket';
 import { computeStandings, round2, standingsFromReported } from './standings';
-import type { SeasonModel, StarterScore, Team, TeamWeek, Week } from './types';
+import type { PlayerScore, SeasonModel, StarterScore, Team, TeamWeek, Week } from './types';
 import type {
   SleeperBracketMatch,
   SleeperLeague,
@@ -42,13 +42,36 @@ export const MAX_PLAYOFF_ROUNDS = 4;
 export const weeksPerPlayoffRound = (playoffRoundType: number | undefined): number =>
   playoffRoundType === 2 ? 2 : 1;
 
-/** Last week worth requesting for a league. Unplayed weeks answer `[]` cheaply. */
+/**
+ * Playoff rounds for a bracket of `playoffTeams`.
+ *
+ * Six teams need three rounds, four need two. Without a team count the widest
+ * bracket Sleeper offers is assumed, which costs a couple of empty requests.
+ */
+export function playoffRounds(playoffTeams: number | undefined): number {
+  if (!playoffTeams || playoffTeams < 2) return MAX_PLAYOFF_ROUNDS;
+  return Math.min(MAX_PLAYOFF_ROUNDS, Math.ceil(Math.log2(playoffTeams)));
+}
+
+/**
+ * Last week worth requesting for a league.
+ *
+ * With a known bracket size this is exact: the championship week. Without one
+ * it leaves room for the widest bracket, and the unplayed weeks answer `[]`
+ * cheaply.
+ */
 export function lastWeekOfSeason(
   playoffWeekStart: number,
   playoffRoundType: number | undefined,
+  playoffTeams?: number,
 ): number {
-  const playoffWeeks = MAX_PLAYOFF_ROUNDS * weeksPerPlayoffRound(playoffRoundType);
-  return Math.min(MAX_SEASON_WEEK, playoffWeekStart + playoffWeeks);
+  const rounds = playoffRounds(playoffTeams);
+  const weeksPerRound = weeksPerPlayoffRound(playoffRoundType);
+  const lastWeek =
+    playoffTeams && playoffTeams >= 2
+      ? playoffWeekStart + rounds * weeksPerRound - 1
+      : playoffWeekStart + rounds * weeksPerRound;
+  return Math.min(MAX_SEASON_WEEK, lastWeek);
 }
 
 export interface RawSeasonData {
@@ -109,6 +132,7 @@ function buildTeams(rosters: SleeperRoster[], users: SleeperUser[]): Team[] {
           ties: roster.settings.ties ?? 0,
           pointsFor: points(roster.settings.fpts, roster.settings.fpts_decimal),
           pointsAgainst: points(roster.settings.fpts_against, roster.settings.fpts_against_decimal),
+          maxPointsFor: points(roster.settings.ppts, roster.settings.ppts_decimal),
         },
       };
     })
@@ -123,6 +147,17 @@ function buildStarters(matchup: SleeperMatchup): StarterScore[] {
     // Sleeper pads empty lineup slots with "0"; they are not real players.
     if (!playerId || playerId === '0') return [];
     return [{ playerId, points: round2(scores[slot] ?? 0), slot }];
+  });
+}
+
+/** Rostered players who did not start. `players_points` covers the whole roster. */
+function buildBench(matchup: SleeperMatchup): PlayerScore[] {
+  const started = new Set(matchup.starters ?? []);
+  const scores = matchup.players_points ?? {};
+
+  return (matchup.players ?? []).flatMap((playerId) => {
+    if (!playerId || playerId === '0' || started.has(playerId)) return [];
+    return [{ playerId, points: round2(scores[playerId] ?? 0) }];
   });
 }
 
@@ -176,6 +211,7 @@ function buildWeek(
       opponentPoints: against,
       outcome,
       starters: buildStarters(matchup),
+      bench: buildBench(matchup),
     };
   });
 
@@ -265,6 +301,7 @@ export function buildSeason(raw: RawSeasonData): SeasonModel {
 
     usesMedianScoring,
     hasScores: settledRegularSeasonWeeks.length > 0,
+    isRegularSeasonComplete: settledRegularSeasonWeeks.length >= regularSeasonEndWeek,
     isComplete: winners.placements.some((placement) => placement.place === 1),
   };
 }

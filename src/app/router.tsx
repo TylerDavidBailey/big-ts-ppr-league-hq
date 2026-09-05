@@ -1,15 +1,24 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { LandingPage } from '@/features/landing/LandingPage';
-import { SeasonPage } from '@/features/season/SeasonPage';
+import { AllTimeRoute } from '@/features/allTime/AllTimeRoute';
+import { LeaguePage } from '@/features/league/LeaguePage';
+import { SeasonRoute } from '@/features/season/SeasonRoute';
 
+/**
+ * `/` is the newest season, so the link people share never goes stale. A year
+ * reaches any season; `all-time` reads them all.
+ */
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/l/:leagueId" element={<SeasonPage />} />
-      <Route path="/l/:leagueId/:tab" element={<SeasonPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route element={<LeaguePage />}>
+        <Route index element={<SeasonRoute tab="awards" />} />
+        <Route path="all-time" element={<AllTimeRoute tab="standings" />} />
+        <Route path="all-time/records" element={<AllTimeRoute tab="records" />} />
+        <Route path=":season" element={<SeasonRoute tab="awards" />} />
+        <Route path=":season/standings" element={<SeasonRoute tab="standings" />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
     </Routes>
   );
 }

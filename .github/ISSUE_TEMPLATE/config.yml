@@ -1,5 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Sleeper API documentation
-    url: https://docs.sleeper.com/
-    about: The upstream API this app reads. Check here first if data looks wrong.

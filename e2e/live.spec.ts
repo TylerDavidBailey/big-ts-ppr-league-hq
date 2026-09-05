@@ -8,32 +8,33 @@ import { expect, test } from '@playwright/test';
  * after touching the API client, to catch a change on Sleeper's side that the
  * captured fixtures would hide.
  */
-const LEAGUE_ID = '1373305494734651392';
-
 test.describe('live Sleeper API @live', () => {
-  test('loads a real league and walks its season chain', async ({ page }) => {
-    await page.goto(`/#/l/${LEAGUE_ID}/history`);
+  test('loads the league and walks its season chain', async ({ page }) => {
+    await page.goto('/');
 
-    await expect(page.getByText('Season history')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: "Big-T's PPR League" })).toBeVisible({
+      timeout: 20_000,
+    });
     // The chain reaches back through several seasons via previous_league_id.
-    await expect(page.getByRole('link', { name: /2023/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: '2023', exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test('resolves awards for a finished season with a real player name', async ({ page }) => {
-    await page.goto(`/#/l/${LEAGUE_ID}/awards`);
-    await expect(page.getByRole('navigation', { name: 'Season' })).toBeVisible({
+    await page.goto('/#/2025');
+    await expect(page.getByRole('heading', { name: 'Highest Starter Week' })).toBeVisible({
       timeout: 20_000,
     });
-
-    await page.getByRole('link', { name: '2025', exact: true }).click();
-    await expect(page.getByText('Highest Starter Week')).toBeVisible({ timeout: 20_000 });
 
     // A player id that failed to resolve renders as "Player 1234".
     await expect(page.getByText(/^Player \d+$/)).toBeHidden();
   });
 
-  test('reports an unknown league id', async ({ page }) => {
-    await page.goto('/#/l/12345/awards');
-    await expect(page.getByText('League not found')).toBeVisible({ timeout: 20_000 });
+  test('tallies every season into the all-time standings', async ({ page }) => {
+    await page.goto('/#/all-time');
+    await expect(page.getByRole('table').getByRole('row').nth(1)).toBeVisible({
+      timeout: 30_000,
+    });
   });
 });
