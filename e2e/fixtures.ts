@@ -7,6 +7,8 @@
  */
 import type { Page, Route } from '@playwright/test';
 
+import { EXAMPLE_LEAGUE_ID } from '../src/lib/exampleLeague';
+
 import league from '../src/test/fixtures/league.json' with { type: 'json' };
 import losersBracket from '../src/test/fixtures/losersBracket.json' with { type: 'json' };
 import matchups from '../src/test/fixtures/matchups.json' with { type: 'json' };
@@ -52,6 +54,9 @@ const seasons: Record<string, LeagueResponse> = {
     previous_league_id: FINISHED_LEAGUE_ID,
   },
   [FINISHED_LEAGUE_ID]: league,
+  // The landing page's "example league" link points at a real public league,
+  // so the mock answers that id with the finished-season fixture.
+  [EXAMPLE_LEAGUE_ID]: { ...league, league_id: EXAMPLE_LEAGUE_ID },
   [OLDEST_LEAGUE_ID]: {
     ...league,
     league_id: OLDEST_LEAGUE_ID,
@@ -65,7 +70,15 @@ export async function mockSleeper(page: Page): Promise<void> {
     const path = new URL(route.request().url()).pathname;
 
     if (path === '/v1/state/nfl') {
-      return json(route, { season: '2026', week: 1, display_week: 1, season_type: 'regular' });
+      // 2026 is the live season, so the 2025 fixture league has no week in
+      // progress and every one of its weeks is final.
+      return json(route, {
+        season: '2026',
+        previous_season: '2025',
+        week: 1,
+        display_week: 1,
+        season_type: 'regular',
+      });
     }
 
     const leagueMatch = /^\/v1\/league\/(\d+)(\/(.*))?$/.exec(path);

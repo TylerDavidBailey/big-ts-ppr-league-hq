@@ -1,6 +1,6 @@
 import { TeamChip } from '../../shared/TeamChip';
 import { PlayerChip } from '../../shared/PlayerChip';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { AwardWinner, ResolvedAward } from '@/domain/awards';
@@ -14,7 +14,8 @@ interface AwardsTabProps {
   awards: ResolvedAward[];
 }
 
-const PODIUM_TONE = ['gold', 'neutral', 'purple'] as const;
+/** Keyed by finishing place, so a bracket resolved out of order still reads right. */
+const PODIUM_TONE: Record<number, BadgeTone> = { 1: 'gold', 2: 'neutral', 3: 'purple' };
 
 /** Placement finishes come from the playoff bracket's placement games. */
 function Podium({ season }: { season: SeasonModel }) {
@@ -33,13 +34,13 @@ function Podium({ season }: { season: SeasonModel }) {
           </p>
         ) : (
           <ol className="space-y-2">
-            {podium.map((placement, index) => (
+            {podium.map((placement) => (
               <li
                 key={placement.place}
                 className="flex items-center justify-between gap-3 rounded-xl border border-hairline bg-surface/60 px-4 py-3"
               >
                 <TeamChip team={season.teamsByRosterId.get(placement.rosterId)} showManager />
-                <Badge tone={PODIUM_TONE[index] ?? 'neutral'}>
+                <Badge tone={PODIUM_TONE[placement.place] ?? 'neutral'}>
                   {placementLabel(placement.place)}
                 </Badge>
               </li>
@@ -53,8 +54,12 @@ function Podium({ season }: { season: SeasonModel }) {
 
 function SeasonAwardCard({ award, season }: { award: ResolvedAward; season: SeasonModel }) {
   const { definition, result } = award;
-  const winner = Array.isArray(result) ? null : result;
+  // An award returns several winners when the league genuinely tied. Showing
+  // one of them would settle an argument that is not actually settled.
+  const winners: AwardWinner[] = Array.isArray(result) ? result : result ? [result] : [];
   const playerIndex = usePlayerIndex().data ?? {};
+  const first = winners[0];
+  const isTie = winners.length > 1;
 
   return (
     <Card className="flex h-full flex-col">
@@ -65,25 +70,40 @@ function SeasonAwardCard({ award, season }: { award: ResolvedAward; season: Seas
           </span>
           {definition.name}
         </CardTitle>
-        {winner?.week ? <Badge tone="brand">Week {winner.week}</Badge> : null}
+        {isTie ? (
+          <Badge tone="purple">Tied</Badge>
+        ) : first?.week ? (
+          <Badge tone="brand">Week {first.week}</Badge>
+        ) : null}
       </CardHeader>
 
       <CardBody className="flex flex-1 flex-col justify-between gap-4">
-        {winner ? (
+        {first ? (
           <>
             <div className="space-y-3">
-              <TeamChip team={season.teamsByRosterId.get(winner.rosterId)} showManager size="lg" />
-              {winner.playerId ? (
-                <div className="rounded-xl border border-hairline bg-surface/60 px-3 py-2.5">
-                  <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} />
+              {winners.map((winner) => (
+                <div key={`${winner.rosterId}-${winner.week ?? 0}-${winner.playerId ?? ''}`}>
+                  <TeamChip
+                    team={season.teamsByRosterId.get(winner.rosterId)}
+                    showManager
+                    size={isTie ? 'md' : 'lg'}
+                  />
+                  {winner.playerId ? (
+                    <div className="mt-2 rounded-xl border border-hairline bg-surface/60 px-3 py-2.5">
+                      <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} />
+                    </div>
+                  ) : winner.detail ? (
+                    <p className="mt-1 text-sm text-ink-muted">{winner.detail}</p>
+                  ) : null}
+                  {isTie && winner.week ? (
+                    <p className="mt-1 text-xs text-ink-dim">Week {winner.week}</p>
+                  ) : null}
                 </div>
-              ) : winner.detail ? (
-                <p className="text-sm text-ink-muted">{winner.detail}</p>
-              ) : null}
+              ))}
             </div>
 
             <p className="font-display text-3xl font-bold tabular text-brand">
-              {definition.formatValue(winner.value)}
+              {definition.formatValue(first.value)}
             </p>
           </>
         ) : (
@@ -91,6 +111,7 @@ function SeasonAwardCard({ award, season }: { award: ResolvedAward; season: Seas
         )}
 
         <p className="border-t border-hairline pt-3 text-xs leading-relaxed text-ink-dim">
+          {isTie ? `Tied, so this award is the league's to settle. ` : ''}
           {definition.description}
         </p>
       </CardBody>
@@ -133,7 +154,7 @@ function WeeklyAwardCard({ award, season }: { award: ResolvedAward; season: Seas
                   <TeamChip team={season.teamsByRosterId.get(winner.rosterId)} size="sm" />
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular text-loss">
-                  {winner.value.toFixed(2)}
+                  {definition.formatValue(winner.value)}
                 </span>
               </li>
             ))}

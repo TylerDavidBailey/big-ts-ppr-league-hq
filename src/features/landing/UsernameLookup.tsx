@@ -15,8 +15,29 @@ export function UsernameLookup() {
   const [submitted, setSubmitted] = useState('');
 
   const nflState = useNflState();
+  const currentSeason = nflState.data?.season;
   const userQuery = useUserByName(submitted, submitted.length > 0);
-  const leaguesQuery = useUserLeagues(userQuery.data?.user_id, nflState.data?.season);
+  const currentLeagues = useUserLeagues(userQuery.data?.user_id, currentSeason);
+
+  /*
+   * Fall back to last season when this one is empty.
+   *
+   * `/state/nfl` rolls over to the new season in the spring, months before most
+   * leagues are recreated. Without this, anyone looking themselves up in the
+   * offseason is told they have no leagues while last season sits there ready
+   * to render. This is the escape hatch for people who do not know their league
+   * ID, so a dead end here is expensive.
+   */
+  const previousSeason = nflState.data?.previous_season;
+  const needsFallback = currentLeagues.isSuccess && currentLeagues.data.length === 0;
+  const previousLeagues = useUserLeagues(
+    needsFallback ? userQuery.data?.user_id : undefined,
+    needsFallback ? previousSeason : undefined,
+  );
+
+  const leaguesQuery =
+    needsFallback && previousLeagues.data?.length ? previousLeagues : currentLeagues;
+  const shownSeason = leaguesQuery === previousLeagues ? previousSeason : currentSeason;
 
   function handleSubmit(event: SyntheticEvent) {
     event.preventDefault();
@@ -24,7 +45,11 @@ export function UsernameLookup() {
   }
 
   const notFound = userQuery.error instanceof NotFoundError;
-  const isBusy = submitted.length > 0 && (userQuery.isPending || leaguesQuery.isPending);
+  const isBusy =
+    submitted.length > 0 &&
+    (userQuery.isPending ||
+      currentLeagues.isPending ||
+      (needsFallback && previousLeagues.isPending));
   const leagues = leaguesQuery.data ?? [];
 
   return (
@@ -67,7 +92,13 @@ export function UsernameLookup() {
 
       {!isBusy && userQuery.data && leagues.length === 0 && leaguesQuery.isSuccess ? (
         <p className="text-sm text-ink-dim">
-          {userQuery.data.display_name} has no {nflState.data?.season} leagues.
+          {userQuery.data.display_name} has no {currentSeason} or {previousSeason} leagues.
+        </p>
+      ) : null}
+
+      {leagues.length > 0 && shownSeason !== currentSeason ? (
+        <p className="text-xs text-ink-dim">
+          No {currentSeason} leagues yet, so these are from {shownSeason}.
         </p>
       ) : null}
 

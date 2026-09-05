@@ -1,6 +1,7 @@
 import { useState, type SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { EXAMPLE_LEAGUE_ID } from '@/lib/exampleLeague';
 import { isValidLeagueId } from '@/lib/format';
 
 /** Sleeper league URLs look like https://sleeper.com/leagues/1234567890/team */
@@ -67,7 +68,7 @@ export function LeagueIdForm() {
         <p id="league-id-hint" className="mt-2.5 text-sm text-ink-dim">
           Find it in your Sleeper league URL:{' '}
           <span className="font-mono text-ink-muted">sleeper.com/leagues/</span>
-          <span className="font-mono text-brand">1373305494734651392</span>
+          <span className="font-mono text-brand">{EXAMPLE_LEAGUE_ID}</span>
         </p>
       )}
     </form>

@@ -105,6 +105,7 @@ describe('regularSeasonChamp edge cases', () => {
       {
         rosterId: 1,
         rank: 1,
+        tied: false,
         wins: 10,
         losses: 4,
         ties: 0,

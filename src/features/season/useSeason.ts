@@ -15,6 +15,7 @@ import {
   useLeagueRosters,
   useLeagueUsers,
   useLosersBracket,
+  useNflState,
   usePlayerIndex,
   useSeasonMatchups,
   useWinnersBracket,
@@ -42,12 +43,19 @@ export function useSeason(leagueId: string | undefined): SeasonQueryResult {
   const losersQuery = useLosersBracket(leagueId, league);
   const matchupQueries = useSeasonMatchups(leagueId, league);
   const playerIndexQuery = usePlayerIndex();
+  const nflStateQuery = useNflState();
 
   const settledWeeks = matchupQueries.filter((query) => query.isSuccess).length;
   const weekProgress = matchupQueries.length === 0 ? 0 : settledWeeks / matchupQueries.length;
 
-  // Depend on the count of settled weeks rather than the query array, which is a
-  // fresh reference on every render.
+  /**
+   * A fingerprint of the week data itself, not just how much of it has arrived.
+   *
+   * Keying the memo on a count froze the model once every week had resolved, so
+   * a refetch during Sunday's games could never change what was on screen.
+   */
+  const weekDataVersion = matchupQueries.map((query) => query.dataUpdatedAt).join(',');
+
   const season = useMemo<SeasonModel | null>(() => {
     if (!league || !usersQuery.data || !rostersQuery.data) return null;
 
@@ -64,9 +72,14 @@ export function useSeason(leagueId: string | undefined): SeasonQueryResult {
       matchupsByWeek,
       winnersBracket: winnersQuery.data ?? [],
       losersBracket: losersQuery.data ?? [],
+      nflState: nflStateQuery.data
+        ? { season: nflStateQuery.data.season, week: nflStateQuery.data.week }
+        : null,
     };
 
     return buildSeason(raw);
+    // matchupQueries is a fresh array every render, so weekDataVersion stands in
+    // for it: it changes whenever any week's data is actually refetched.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     league,
@@ -74,7 +87,8 @@ export function useSeason(leagueId: string | undefined): SeasonQueryResult {
     rostersQuery.data,
     winnersQuery.data,
     losersQuery.data,
-    settledWeeks,
+    nflStateQuery.data,
+    weekDataVersion,
   ]);
 
   const awards = useMemo<ResolvedAward[]>(() => {

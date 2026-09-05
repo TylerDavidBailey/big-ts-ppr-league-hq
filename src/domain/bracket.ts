@@ -13,8 +13,11 @@ export function buildBracket(matches: SleeperBracketMatch[]): Bracket {
 
   for (const match of matches) {
     if (match.p === undefined) continue;
-    if (match.w !== null) placements.push({ place: match.p, rosterId: match.w });
-    if (match.l !== null) placements.push({ place: match.p + 1, rosterId: match.l });
+    // `!= null` on purpose: an undecided game may omit `w`/`l` entirely rather
+    // than sending null, and `!== null` would then emit a placement with an
+    // undefined roster that renders as "Unknown team".
+    if (match.w != null) placements.push({ place: match.p, rosterId: match.w });
+    if (match.l != null) placements.push({ place: match.p + 1, rosterId: match.l });
   }
 
   placements.sort((a, b) => a.place - b.place);

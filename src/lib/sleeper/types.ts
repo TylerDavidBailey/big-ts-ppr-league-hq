@@ -16,6 +16,10 @@ export interface SleeperLeagueSettings {
   playoff_week_start?: number;
   playoff_teams?: number;
   num_teams?: number;
+  /** 1 when every team also plays the league median each week. */
+  league_average_match?: number;
+  /** 2 when every playoff round runs over two weeks. */
+  playoff_round_type?: number;
   leg?: number;
   start_week?: number;
   [key: string]: number | undefined;

@@ -43,6 +43,20 @@ weekly by `.github/workflows/refresh-players.yml`.
 `league.settings.playoff_week_start - 1`. Read `season.regularSeasonEndWeek`, or iterate
 `season.regularSeasonWeeks`, which is already filtered.
 
+**Iterate `season.regularSeasonWeeks`, never `season.weeks`, in an award.** It excludes the
+week currently being played. Sleeper posts scores from Thursday night, so a live week has
+most rosters near zero; settling a record or a punishment on it names the wrong team from
+Thursday until Sunday evening.
+
+**An award returns co-winners on a tie.** `compute` may return an array for a season-scoped
+award. Never pick one with `>` or `<` alone, or the award silently goes to the lowest roster
+id. The same applies to standings: `StandingsRow.tied` marks an order that is arbitrary.
+
+**A median-scoring league (`league_average_match: 1`) cannot be scored from matchups.**
+Sleeper adds a second result each week against the league median, which is absent from the
+matchup data. `buildSeason` falls back to Sleeper's reported roster totals and sets
+`usesMedianScoring` so the UI can say so.
+
 **An unplayed week is `[]` under HTTP 200. A missing league is `null` under HTTP 404.**
 Conflating them breaks both the empty state and the error state.
 

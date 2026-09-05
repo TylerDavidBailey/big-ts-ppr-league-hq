@@ -10,9 +10,11 @@ export interface Team {
   rosterId: number;
   /** Display name for the team: `metadata.team_name` when set, else the manager's handle. */
   name: string;
-  /** The human behind the roster. */
+  /** The human behind the roster. Co-managers are joined with an ampersand. */
   managerName: string;
   userId: string | null;
+  /** Display names of any co-managers, excluding the primary owner. */
+  coManagerNames: string[];
   avatarId: string | null;
   /** Sleeper's own season totals, kept for cross-checking computed standings. */
   reported: {
@@ -50,12 +52,26 @@ export interface Week {
   phase: 'regular' | 'postseason';
   /** False when Sleeper returned no matchup rows: the week has not been played. */
   played: boolean;
+  /**
+   * True while the week is still being played.
+   *
+   * Scores are real but incomplete, so the week decides no record and no award.
+   * Show it, label it, but do not settle anything on it.
+   */
+  provisional: boolean;
   teams: TeamWeek[];
 }
 
 export interface StandingsRow {
   rosterId: number;
   rank: number;
+  /**
+   * True when this team is level with another on both record and points scored.
+   *
+   * The order between tied teams is then arbitrary, and the UI says so rather
+   * than presenting a coin flip as a ranking.
+   */
+  tied: boolean;
   wins: number;
   losses: number;
   ties: number;
@@ -96,12 +112,29 @@ export interface SeasonModel {
   playoffTeams: number;
 
   weeks: Week[];
-  /** Weeks 1..regularSeasonEndWeek that have actually been played. */
+  /**
+   * Weeks 1..regularSeasonEndWeek that are finished.
+   *
+   * Excludes the week currently being played, so standings and awards are only
+   * ever decided on final scores. Read this in an award, never `weeks`.
+   */
   regularSeasonWeeks: Week[];
+  /** The week being played right now, or null outside this league's live season. */
+  liveWeek: number | null;
 
   standings: StandingsRow[];
   winnersBracket: Bracket;
   losersBracket: Bracket;
+
+  /**
+   * True when this league also plays the weekly median.
+   *
+   * Sleeper awards a second win or loss each week against the league median.
+   * Head-to-head results alone therefore produce roughly half the record
+   * Sleeper reports, so computed standings fall back to Sleeper's own totals
+   * and the UI says which it is showing.
+   */
+  usesMedianScoring: boolean;
 
   /** True once at least one regular-season week has scores. */
   hasScores: boolean;

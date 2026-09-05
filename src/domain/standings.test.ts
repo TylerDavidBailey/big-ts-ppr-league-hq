@@ -9,6 +9,7 @@ const team = (rosterId: number): Team => ({
   rosterId,
   name: `Team ${rosterId}`,
   managerName: `Manager ${rosterId}`,
+  coManagerNames: [],
   userId: String(rosterId),
   avatarId: null,
   reported: { wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0 },
@@ -19,6 +20,7 @@ const week = (weekNumber: number, oneScores: number, twoScores: number): Week =>
   week: weekNumber,
   phase: 'regular',
   played: true,
+  provisional: false,
   teams: [
     {
       rosterId: 1,
@@ -84,7 +86,13 @@ describe('computeStandings', () => {
   });
 
   it('ignores weeks that were never played', () => {
-    const unplayed: Week = { week: 4, phase: 'regular', played: false, teams: [] };
+    const unplayed: Week = {
+      week: 4,
+      phase: 'regular',
+      played: false,
+      provisional: false,
+      teams: [],
+    };
     const rows = computeStandings([team(1), team(2)], [week(1, 100, 90), unplayed]);
     expect(rows[0]!.form).toHaveLength(1);
   });
