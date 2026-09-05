@@ -1,5 +1,11 @@
 # Sleeper League HQ
 
+**[Open the app](https://tylerdavidbailey.github.io/sleeper-league-hq/)**
+
+[![CI](https://github.com/TylerDavidBailey/sleeper-league-hq/actions/workflows/ci.yml/badge.svg)](https://github.com/TylerDavidBailey/sleeper-league-hq/actions/workflows/ci.yml)
+[![Deploy](https://github.com/TylerDavidBailey/sleeper-league-hq/actions/workflows/deploy.yml/badge.svg)](https://github.com/TylerDavidBailey/sleeper-league-hq/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Paste a Sleeper league ID, get the whole season. Standings, weekly scoreboards, the playoff
 bracket, and your league's season awards. Works for any Sleeper fantasy football league,
 any season back to the league's first, with no login and no account.
@@ -10,7 +16,8 @@ your own browser's storage.
 
 ## Try it
 
-Open the site, paste a league ID, hit **Load league**.
+Go to [tylerdavidbailey.github.io/sleeper-league-hq](https://tylerdavidbailey.github.io/sleeper-league-hq/),
+paste a league ID, hit **Load league**.
 
 Your league ID is the number in the Sleeper URL:
 
@@ -24,6 +31,12 @@ instead and pick from the list of leagues you're in.
 
 Leagues you open are remembered on that device, so the next visit shows them as one-click
 cards. Nothing is sent anywhere to make that work.
+
+Every view has its own link, so you can paste one straight into the group chat:
+
+```
+https://tylerdavidbailey.github.io/sleeper-league-hq/#/l/1373305494734651392/awards
+```
 
 ## What you get
 
