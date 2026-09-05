@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { AwardWinner, ResolvedAward } from '@/domain/awards';
 import type { SeasonModel } from '@/domain/types';
-import { placementLabel } from '@/lib/format';
+import { placementLabel, statusLabel } from '@/lib/format';
 import { lookupPlayer } from '@/lib/players';
 import { usePlayerIndex } from '@/lib/sleeper/queries';
 
@@ -153,7 +153,7 @@ export function AwardsTab({ season, awards }: AwardsTabProps) {
       <EmptyState
         icon="⏳"
         title="No games played yet"
-        description={`This league is ${season.status.replace(/_/g, ' ')}. Awards appear once week 1 scores are in.`}
+        description={`This league is ${statusLabel(season.status).toLowerCase()}. Awards appear once week 1 scores are in.`}
       />
     );
   }
