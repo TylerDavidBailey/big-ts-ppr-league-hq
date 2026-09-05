@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Avatar } from '../shared/Avatar';
@@ -12,11 +12,10 @@ import { forgetLeague, getRecentLeagues, type RecentLeague } from '@/lib/storage
  * is waiting on the next visit.
  */
 export function RecentLeagues() {
-  const [leagues, setLeagues] = useState<RecentLeague[]>([]);
-
-  useEffect(() => {
-    setLeagues(getRecentLeagues());
-  }, []);
+  // Read on the first render rather than in an effect. The list is then right
+  // on the first paint instead of flashing empty, and getRecentLeagues() is
+  // total: it answers [] for missing, unparseable or blocked storage.
+  const [leagues, setLeagues] = useState<RecentLeague[]>(getRecentLeagues);
 
   const handleForget = useCallback((leagueId: string) => {
     setLeagues(forgetLeague(leagueId));

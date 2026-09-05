@@ -7,8 +7,24 @@ updates:
       day: tuesday
     open-pull-requests-limit: 5
     groups:
-      # One PR per ecosystem keeps the review load sane; majors stay separate
-      # so a breaking change is never buried in a batch.
+      # These families pin each other, often to an exact version, so a major
+      # that arrives on its own can never install: @vitest/coverage-v8 requires
+      # the identical vitest, and @eslint/js, the plugins and typescript-eslint
+      # all gate on the eslint and typescript majors. They carry no
+      # update-types filter, so their majors group instead of splitting.
+      vitest:
+        patterns: ['vitest', '@vitest/*']
+      linting:
+        patterns:
+          - eslint
+          - '@eslint/*'
+          - eslint-plugin-*
+          - eslint-config-*
+          - typescript-eslint
+          - typescript
+
+      # Everything else: one PR per ecosystem keeps the review load sane, and
+      # majors stay separate so a breaking change is never buried in a batch.
       dev-dependencies:
         dependency-type: development
         update-types: [minor, patch]
