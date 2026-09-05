@@ -33,13 +33,13 @@ describe('allTimeStandings', () => {
   });
 
   it('adds up regular-season games across seasons', () => {
-    const row = rows.find((candidate) => candidate.key === managerKey(champion))!;
+    const row = rows.find((candidate) => candidate.key === managerKey(season2025, champion))!;
     expect(row.wins + row.losses + row.ties).toBe(28);
     expect(row.pointsPerGame).toBeCloseTo(row.pointsFor / 28, 2);
   });
 
   it('counts titles from the bracket, twice for the same champion', () => {
-    const row = rows.find((candidate) => candidate.key === managerKey(champion))!;
+    const row = rows.find((candidate) => candidate.key === managerKey(season2025, champion))!;
     expect(row.titles).toBe(2);
     expect(row.playoffAppearances).toBe(2);
     expect(row.playoffWins).toBeGreaterThan(0);
@@ -48,7 +48,7 @@ describe('allTimeStandings', () => {
   it('counts 1 seeds only for a finished regular season', () => {
     const leader = season2025.standings[0]!;
     const finished = rows.find(
-      (row) => row.key === managerKey(season2025.teamsByRosterId.get(leader.rosterId)!),
+      (row) => row.key === managerKey(season2025, season2025.teamsByRosterId.get(leader.rosterId)!),
     )!;
     expect(finished.topSeeds).toBe(2);
 
@@ -73,19 +73,61 @@ describe('allTimeStandings', () => {
     }
   });
 
-  it('keys an unclaimed roster by roster id', () => {
-    const orphaned = buildSeason({
-      ...fixture,
-      rosters: fixture.rosters.map((roster) => ({ ...roster, owner_id: null })),
-    });
-    const keys = allTimeStandings([summarise(orphaned)]).map((row) => row.key);
-    expect(keys.every((key) => key.startsWith('roster:'))).toBe(true);
-    expect(new Set(keys).size).toBe(12);
+  it('keys an unclaimed roster by season and roster, so two years never merge', () => {
+    const orphan = (season: string, leagueId: string) =>
+      buildSeason({
+        ...fixture,
+        league: { ...fixture.league, season, league_id: leagueId },
+        rosters: fixture.rosters.map((roster) => ({ ...roster, owner_id: null })),
+      });
+    const rows = allTimeStandings([summarise(orphan('2024', 'a')), summarise(orphan('2025', 'b'))]);
+
+    expect(rows).toHaveLength(24);
+    expect(rows.every((row) => row.key.includes(':roster:') && row.seasons === 1)).toBe(true);
   });
 
-  it('skips a season with no scores', () => {
-    const preDraft = buildSeason(seasonFixture({ matchupsByWeek: matchupsThrough(0) }));
-    expect(allTimeStandings([summarise(preDraft)]).every((row) => row.seasons === 0)).toBe(true);
+  it('keeps one row for a manager who renamed, and remembers the old handle', () => {
+    const renamed = buildSeason({
+      ...fixture,
+      league: { ...fixture.league, season: '2026', league_id: 'newest' },
+      matchupsByWeek: matchupsThrough(0),
+      winnersBracket: [],
+      users: fixture.users.map((user) => ({ ...user, display_name: `new_${user.display_name}` })),
+    });
+    const rows = allTimeStandings([summarise(renamed), summarise(season2025)]);
+
+    expect(rows).toHaveLength(12);
+    const row = rows.find((candidate) => candidate.key === managerKey(season2025, champion))!;
+    expect(row.name).toBe(`new_${champion.managerName}`);
+    expect(row.aliases).toEqual([champion.managerName]);
+  });
+
+  it('leaves out a manager who joined for a season that has not started', () => {
+    const newcomer = { ...fixture.users[0]!, user_id: 'brand-new', display_name: 'rookie' };
+    const preDraft = buildSeason({
+      ...fixture,
+      league: { ...fixture.league, season: '2026', league_id: 'newest' },
+      matchupsByWeek: matchupsThrough(0),
+      winnersBracket: [],
+      users: [...fixture.users, newcomer],
+      rosters: fixture.rosters.map((roster, index) =>
+        index === 0 ? { ...roster, owner_id: 'brand-new' } : roster,
+      ),
+    });
+    const rows = allTimeStandings([summarise(preDraft), summarise(season2025)]);
+
+    expect(rows).toHaveLength(12);
+    expect(rows.some((row) => row.name === 'rookie')).toBe(false);
+  });
+
+  it('names a roster whose account left Sleeper', () => {
+    const departed = buildSeason({
+      ...fixture,
+      users: fixture.users.slice(1),
+    });
+    const gone = departed.teams.filter((team) => team.managerName === 'Departed manager');
+    expect(gone).toHaveLength(1);
+    expect(gone[0]!.userId).toBe(fixture.users[0]!.user_id);
   });
 });
 

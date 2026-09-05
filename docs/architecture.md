@@ -50,7 +50,28 @@ its own roster ids, so managers are matched by Sleeper user id, which is stable,
 from the newest season they appear in. A season still in progress contributes its games so
 far and nothing else: no title, no 1 seed, no season-total record.
 
-All three read `season.regularSeasonWeeks`, which excludes the week being played. Sleeper
+## Managers come and go, and rename themselves
+
+Each season is a separate Sleeper league, so roster numbers mean nothing across years.
+`managerKey` in `src/domain/history.ts` identifies a manager by Sleeper user id, which
+survives a handle change. A renamed manager keeps one all-time row under their current
+handle, with the old handles listed as aliases, and a record holder shows the handle they
+used that season.
+
+A manager who left keeps their row, named from the last season they played. A manager who
+joined for a season that has not started yet has no row until week 1 is final. A roster
+with no owner is keyed by league and roster number, so two orphaned rosters from different
+years never merge.
+
+Three cases the API cannot resolve, so the site does not try:
+
+- A roster's owner changes mid-season. Sleeper reports only the current owner, so the
+  whole season is credited to whoever holds the roster when the page loads.
+- A co-managed roster is credited to its primary owner, `owner_id`. If two people swap
+  primary and co-owner between seasons, they become two rows.
+- A season created without `previous_league_id` is not in the chain and does not appear.
+
+All three stats layers read `season.regularSeasonWeeks`, which excludes the week being played. Sleeper
 posts scores from Thursday night, and a half-played week would otherwise hand out a record
 and a beer duty from a partial slate.
 

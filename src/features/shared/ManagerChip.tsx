@@ -10,7 +10,12 @@ interface ManagerChipProps {
 
 /** A manager across seasons: handle first, since team names change yearly. */
 export function ManagerChip({ manager, size = 'md', className }: ManagerChipProps) {
-  const subtitle = manager.teamName !== manager.name ? manager.teamName : null;
+  const subtitle = [
+    manager.teamName !== manager.name ? manager.teamName : null,
+    manager.aliases.length > 0 ? `formerly ${manager.aliases.join(', ')}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <span className={cn('flex min-w-0 items-center gap-2.5', className)}>

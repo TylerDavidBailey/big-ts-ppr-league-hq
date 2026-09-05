@@ -17,8 +17,16 @@ export interface SeasonSummary {
   awards: SeasonAwards;
 }
 
-/** A manager's identity across seasons. Unclaimed rosters stand alone. */
-export const managerKey = (team: Team): string => team.userId ?? `roster:${team.rosterId}`;
+/**
+ * A manager's identity across seasons.
+ *
+ * Sleeper user ids survive renames, so a manager who changes their handle
+ * stays one row. An unclaimed roster has no user, and roster numbers repeat
+ * every season, so it is keyed by league as well and never merges with an
+ * unclaimed roster from another year.
+ */
+export const managerKey = (season: SeasonModel, team: Team): string =>
+  team.userId ?? `${season.leagueId}:roster:${team.rosterId}`;
 
 export interface Manager {
   key: string;
@@ -27,6 +35,8 @@ export interface Manager {
   /** Team name from that same season. */
   teamName: string;
   avatarId: string | null;
+  /** Other handles this manager used in earlier seasons, newest first. */
+  aliases: string[];
 }
 
 /** Newest first, so the first season a manager appears in is their latest. */
@@ -37,13 +47,20 @@ function collectManagers(summaries: readonly SeasonSummary[]): Map<string, Manag
   const managers = new Map<string, Manager>();
   for (const { season } of newestFirst(summaries)) {
     for (const team of season.teams) {
-      const key = managerKey(team);
-      if (managers.has(key)) continue;
+      const key = managerKey(season, team);
+      const known = managers.get(key);
+      if (known) {
+        if (team.managerName !== known.name && !known.aliases.includes(team.managerName)) {
+          known.aliases.push(team.managerName);
+        }
+        continue;
+      }
       managers.set(key, {
         key,
         name: team.managerName,
         teamName: team.name,
         avatarId: team.avatarId,
+        aliases: [],
       });
     }
   }
@@ -106,14 +123,14 @@ export function allTimeStandings(summaries: readonly SeasonSummary[]): AllTimeRo
 
   const rowFor = (season: SeasonModel, rosterId: number): AllTimeRow | undefined => {
     const team = teamFor(season, rosterId);
-    return team ? rows.get(managerKey(team)) : undefined;
+    return team ? rows.get(managerKey(season, team)) : undefined;
   };
 
   for (const { season, awards } of summaries) {
     if (!season.hasScores) continue;
 
     for (const team of season.teams) {
-      const row = rows.get(managerKey(team));
+      const row = rows.get(managerKey(season, team));
       if (row) row.seasons += 1;
     }
 
@@ -169,7 +186,9 @@ export function allTimeStandings(summaries: readonly SeasonSummary[]): AllTimeRo
     }
   }
 
+  // A manager who joined for a season that has not started has no career yet.
   const ranked = [...rows.values()]
+    .filter((row) => row.seasons > 0)
     .map((row) => {
       const games = row.wins + row.losses + row.ties;
       return {
@@ -227,7 +246,7 @@ export function allTimeRecords(summaries: readonly SeasonSummary[]): AllTimeReco
 
   const withManager = (season: SeasonModel, holder: Holder): RecordHolder | null => {
     const team = teamFor(season, holder.rosterId);
-    const manager = team ? managers.get(managerKey(team)) : undefined;
+    const manager = team ? managers.get(managerKey(season, team)) : undefined;
     return manager && team ? { ...manager, ...holder, nameThen: team.managerName } : null;
   };
 

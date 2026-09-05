@@ -104,7 +104,9 @@ function buildTeams(rosters: SleeperRoster[], users: SleeperUser[]): Team[] {
   return rosters
     .map((roster): Team => {
       const user = roster.owner_id ? usersById.get(roster.owner_id) : undefined;
-      const ownerName = user?.display_name ?? 'Unclaimed team';
+      // An owner id with no matching user is an account that left Sleeper.
+      const ownerName =
+        user?.display_name ?? (roster.owner_id ? 'Departed manager' : 'Unclaimed team');
 
       // A co-managed roster names everyone, so a team is not credited to one
       // half of a partnership. Sleeper lists the primary owner in `co_owners`

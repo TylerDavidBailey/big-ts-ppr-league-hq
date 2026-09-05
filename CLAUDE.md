@@ -59,6 +59,11 @@ wrong team from Thursday until Sunday evening.
 with `>` or `<` alone, or the award silently goes to the lowest roster id. The same applies
 to standings: `StandingsRow.tied` marks an order that is arbitrary.
 
+**Match managers across seasons by Sleeper user id, never by roster id or handle.**
+Roster numbers repeat every season and handles get renamed. `managerKey` in
+`src/domain/history.ts` is the one place that decides identity; an unclaimed roster is
+keyed by league and roster so two years never merge.
+
 **A cross-season tally must not credit a live season with a title or a 1 seed.** Check
 `season.isRegularSeasonComplete` before counting a 1 seed, and read titles from the
 bracket's placement games only.
