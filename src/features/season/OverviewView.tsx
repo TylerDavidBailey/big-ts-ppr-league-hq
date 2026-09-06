@@ -6,7 +6,6 @@ import { ThisWeekHero } from './ThisWeekHero';
 import { TeamChip } from '../shared/TeamChip';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@/components/ui/Card';
-import { StatTile } from '@/components/ui/StatTile';
 import { HeadRow, RankCell, Row, Table, Td, Th } from '@/components/ui/Table';
 import { beerDutyTally, type RankedEntry, type SeasonAwards } from '@/domain/awards';
 import type { SeasonModel } from '@/domain/types';
@@ -18,100 +17,143 @@ interface OverviewViewProps {
   awards: SeasonAwards;
 }
 
+/** The link from a card to the section behind it. Lives in the card header, every time. */
 function SectionLink({ to, children }: { to: string; children: string }) {
   return (
-    <Link to={to} className="text-xs font-semibold text-brand underline-offset-4 hover:underline">
+    <Link
+      to={to}
+      className="shrink-0 text-xs font-semibold whitespace-nowrap text-brand underline-offset-4 hover:underline"
+    >
       {children} →
     </Link>
   );
 }
 
-interface AwardGlanceProps {
-  config: AwardConfig;
-  entries: RankedEntry[];
+interface AwardRowProps {
+  icon: string;
+  name: string;
+  payout?: number;
+  /** Everyone in first place. */
+  leaders: RankedEntry[];
   season: SeasonModel;
-  unit: string;
+  value: (entry: RankedEntry) => string;
+  detail: (entry: RankedEntry) => string;
+  tone?: 'brand' | 'loss';
+  emptyText: string;
 }
 
-/** One paid award, winner only. The places behind them live on the awards page. */
-function AwardGlance({ config, entries, season, unit }: AwardGlanceProps) {
-  const winners = entries.filter((entry) => entry.place === 1);
-  const first = winners[0];
-  const throughWeek = season.regularSeasonWeeks.at(-1)?.week;
-
-  return (
-    <StatTile
-      label={
-        <>
-          <span aria-hidden className="mr-1.5">
-            {config.icon}
-          </span>
-          {config.name}
-        </>
-      }
-      value={first ? `${formatPoints(first.value)} ${unit}` : undefined}
-      badge={
-        <span className="flex items-center gap-1.5">
-          {winners.length > 1 ? <Badge tone="purple">Tied</Badge> : null}
-          {first && !season.isRegularSeasonComplete && throughWeek ? (
-            <Badge tone="brand">Wk {throughWeek}</Badge>
-          ) : null}
-          <span className="font-display text-sm font-bold tabular text-gold">
-            {formatMoney(config.payout)}
-          </span>
-        </span>
-      }
-    >
-      {winners.length === 0 ? (
-        <p className="text-sm text-ink-dim">Not decided yet.</p>
-      ) : (
-        winners.map((winner) => (
-          <div key={`${winner.rosterId}-${winner.week ?? 0}-${winner.playerId ?? ''}`}>
-            <TeamChip team={season.teamsByRosterId.get(winner.rosterId)} size="sm" />
-            <p className="pl-8 text-xs text-ink-dim">
-              {[winner.playerName, winner.week ? `Week ${winner.week}` : winner.detail]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-          </div>
-        ))
-      )}
-    </StatTile>
-  );
-}
-
-/** Who has drawn beer duty most often so far. */
-function BeerDutyGlance({ season, awards }: OverviewViewProps) {
-  const tally = beerDutyTally(awards.beerDuty);
-  const leaders = tally.filter((entry) => entry.place === 1);
+/** One award as a row: what it is, who leads, and by how much. */
+function AwardRow({
+  icon,
+  name,
+  payout,
+  leaders,
+  season,
+  value,
+  detail,
+  tone = 'brand',
+  emptyText,
+}: AwardRowProps) {
   const first = leaders[0];
 
   return (
-    <StatTile
-      label={
-        <>
-          <span aria-hidden className="mr-1.5">
-            {LEAGUE.punishment.icon}
+    <li className="flex items-start gap-3 py-3">
+      <span aria-hidden className="mt-0.5 w-6 shrink-0 text-center text-lg leading-none">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
+            {name}
           </span>
-          {LEAGUE.punishment.name}
-        </>
-      }
-      value={first ? `${first.value}×` : undefined}
-      tone="loss"
-      badge={leaders.length > 1 ? <Badge tone="purple">Tied</Badge> : null}
-      footer={<SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>}
-    >
-      {first ? (
-        leaders.map((leader) => (
-          <div key={leader.rosterId}>
-            <TeamChip team={season.teamsByRosterId.get(leader.rosterId)} size="sm" />
-            <p className="pl-8 text-xs text-ink-dim">{leader.detail}</p>
+          {leaders.length > 1 ? <Badge tone="purple">Tied</Badge> : null}
+        </div>
+        {first ? (
+          <div className="mt-1.5 space-y-1.5">
+            {leaders.map((leader) => (
+              <div
+                key={`${leader.rosterId}-${leader.week ?? 0}-${leader.playerId ?? ''}`}
+                className="flex items-center justify-between gap-3"
+              >
+                <span className="min-w-0">
+                  <TeamChip team={season.teamsByRosterId.get(leader.rosterId)} size="sm" />
+                  <span className="block truncate pl-8 text-xs text-ink-dim">{detail(leader)}</span>
+                </span>
+                <span
+                  className={`shrink-0 font-display text-lg font-bold tabular ${tone === 'loss' ? 'text-loss' : 'text-brand'}`}
+                >
+                  {value(leader)}
+                </span>
+              </div>
+            ))}
           </div>
-        ))
-      ) : (
-        <p className="text-sm text-ink-dim">Nobody yet.</p>
-      )}
-    </StatTile>
+        ) : (
+          <p className="mt-1 text-sm text-ink-dim">{emptyText}</p>
+        )}
+      </div>
+      {payout !== undefined ? (
+        <span className="shrink-0 font-display text-sm font-bold tabular text-gold">
+          {formatMoney(payout)}
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
+const leadersOf = (entries: RankedEntry[]) => entries.filter((entry) => entry.place === 1);
+
+const awardDetail = (entry: RankedEntry) =>
+  [entry.playerName, entry.week ? `Week ${entry.week}` : entry.detail].filter(Boolean).join(' · ');
+
+/** The three paid awards and the punishment, one row each, leaders only. */
+function AwardsCard({ season, awards }: OverviewViewProps) {
+  const throughWeek = season.regularSeasonWeeks.at(-1)?.week;
+  const paid = (config: AwardConfig, entries: RankedEntry[], unit: string) => (
+    <AwardRow
+      icon={config.icon}
+      name={config.name}
+      payout={config.payout}
+      leaders={leadersOf(entries)}
+      season={season}
+      value={(entry) => `${formatPoints(entry.value)} ${unit}`}
+      detail={awardDetail}
+      emptyText="Not decided yet."
+    />
+  );
+
+  return (
+    <Card className="flex h-full flex-col">
+      <CardHeader>
+        <CardTitle>Awards</CardTitle>
+        <span className="flex items-center gap-3">
+          {!season.isRegularSeasonComplete && throughWeek ? (
+            <span className="text-xs text-ink-dim">Through week {throughWeek}</span>
+          ) : null}
+          <SectionLink to={`/${season.season}/awards`}>All places</SectionLink>
+        </span>
+      </CardHeader>
+      <CardBody className="flex-1">
+        <ul aria-label="Award leaders" className="divide-y divide-hairline/60">
+          {paid(LEAGUE.awards.regularSeasonChamp, awards.regularSeasonChamp, 'PF')}
+          {paid(LEAGUE.awards.highestTeamWeek, awards.highestTeamWeek, 'pts')}
+          {paid(LEAGUE.awards.highestStarterWeek, awards.highestStarterWeek, 'pts')}
+          <AwardRow
+            icon={LEAGUE.punishment.icon}
+            name={`Most ${LEAGUE.punishment.name.toLowerCase()}`}
+            leaders={leadersOf(beerDutyTally(awards.beerDuty))}
+            season={season}
+            value={(entry) => `${entry.value}×`}
+            detail={(entry) => entry.detail ?? ''}
+            tone="loss"
+            emptyText="Nobody yet."
+          />
+        </ul>
+      </CardBody>
+      <CardFooter className="flex items-center justify-between gap-3">
+        <span>{LEAGUE.punishment.icon} is a punishment, not a payout.</span>
+        <SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -121,51 +163,53 @@ function PlayoffPicture({ season }: { season: SeasonModel }) {
   const rows = season.standings.slice(0, cutoff);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <CardTitle>
           {season.isRegularSeasonComplete ? 'Playoff seeds' : 'Playoff picture'}
         </CardTitle>
-        <span className="text-xs text-ink-dim">
-          {season.isRegularSeasonComplete
-            ? 'Regular season final'
-            : `Through week ${season.regularSeasonWeeks.at(-1)?.week ?? 0}`}
+        <span className="flex items-center gap-3">
+          <span className="text-xs text-ink-dim">
+            {season.isRegularSeasonComplete
+              ? 'Regular season final'
+              : `Through week ${season.regularSeasonWeeks.at(-1)?.week ?? 0}`}
+          </span>
+          <SectionLink to={`/${season.season}/standings`}>Full standings</SectionLink>
         </span>
       </CardHeader>
-      <Table caption={`${season.season} playoff picture`}>
-        <HeadRow>
-          <Th className="w-12">#</Th>
-          <Th>Team</Th>
-          <Th align="right">Record</Th>
-          <Th align="right" className="hidden sm:table-cell">
-            PF
-          </Th>
-        </HeadRow>
-        <tbody>
-          {rows.map((row) => (
-            <Row key={row.rosterId}>
-              <RankCell rank={row.rank} tone={row.rank === 1 ? 'gold' : 'brand'} />
-              <Td>
-                <TeamChip team={season.teamsByRosterId.get(row.rosterId)} showManager />
-              </Td>
-              <Td align="right" className="font-semibold">
-                {formatRecord(row.wins, row.losses, row.ties)}
-                {row.tied ? <span className="ml-1 text-xs text-ink-dim">T</span> : null}
-              </Td>
-              <Td align="right" className="hidden text-ink-muted sm:table-cell">
-                {formatPoints(row.pointsFor)}
-              </Td>
-            </Row>
-          ))}
-        </tbody>
-      </Table>
-      <CardFooter className="flex items-center justify-between gap-3">
-        <span>
-          {season.playoffTeams > 0
-            ? `${season.playoffTeams} teams make the playoffs.`
-            : 'Every team is listed.'}
-        </span>
-        <SectionLink to={`/${season.season}/standings`}>Full standings</SectionLink>
+      <div className="flex-1">
+        <Table caption={`${season.season} playoff picture`}>
+          <HeadRow>
+            <Th className="w-[3.25rem]">#</Th>
+            <Th>Team</Th>
+            <Th align="right">Record</Th>
+            <Th align="right" abbr="Points for">
+              PF
+            </Th>
+          </HeadRow>
+          <tbody>
+            {rows.map((row) => (
+              <Row key={row.rosterId}>
+                <RankCell rank={row.rank} tone={row.rank === 1 ? 'gold' : 'brand'} />
+                <Td>
+                  <TeamChip team={season.teamsByRosterId.get(row.rosterId)} showManager />
+                </Td>
+                <Td align="right" className="font-semibold">
+                  {formatRecord(row.wins, row.losses, row.ties)}
+                  {row.tied ? <span className="ml-1 text-xs text-ink-dim">T</span> : null}
+                </Td>
+                <Td align="right" className="text-ink-muted">
+                  {formatPoints(row.pointsFor)}
+                </Td>
+              </Row>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+      <CardFooter>
+        {season.playoffTeams > 0
+          ? `${season.playoffTeams} teams make the playoffs, from week ${season.playoffWeekStart}.`
+          : 'Every team is listed.'}
       </CardFooter>
     </Card>
   );
@@ -195,7 +239,13 @@ function Managers({ season }: { season: SeasonModel }) {
   );
 }
 
-/** The dashboard: the latest beer duty, the podium, each award's leader, and the top of the table. */
+/**
+ * The dashboard.
+ *
+ * Top to bottom: the newest beer duty while the season runs, the podium once
+ * the playoffs are set, then the table beside the awards so a glance covers
+ * both the race and the money.
+ */
 export function OverviewView({ season, awards }: OverviewViewProps) {
   if (!season.hasScores) {
     return (
@@ -211,38 +261,10 @@ export function OverviewView({ season, awards }: OverviewViewProps) {
     <div className="space-y-5">
       <ThisWeekHero season={season} awards={awards} />
       {season.isRegularSeasonComplete ? <Podium season={season} awards={awards} /> : null}
-
-      <section aria-label="Awards at a glance" className="space-y-3">
-        <div className="flex items-center justify-between gap-3 px-1">
-          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-ink-muted">
-            Awards at a glance
-          </h3>
-          <SectionLink to={`/${season.season}/awards`}>All awards</SectionLink>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <AwardGlance
-            config={LEAGUE.awards.regularSeasonChamp}
-            entries={awards.regularSeasonChamp}
-            season={season}
-            unit="PF"
-          />
-          <AwardGlance
-            config={LEAGUE.awards.highestTeamWeek}
-            entries={awards.highestTeamWeek}
-            season={season}
-            unit="pts"
-          />
-          <AwardGlance
-            config={LEAGUE.awards.highestStarterWeek}
-            entries={awards.highestStarterWeek}
-            season={season}
-            unit="pts"
-          />
-          <BeerDutyGlance season={season} awards={awards} />
-        </div>
-      </section>
-
-      <PlayoffPicture season={season} />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <PlayoffPicture season={season} />
+        <AwardsCard season={season} awards={awards} />
+      </div>
     </div>
   );
 }

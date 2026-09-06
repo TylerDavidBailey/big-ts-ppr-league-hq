@@ -51,7 +51,7 @@ export function StandingsTable({ season }: { season: SeasonModel }) {
   const playoffCutoff = season.playoffTeams;
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <CardHeader>
         <CardTitle>Standings</CardTitle>
         {season.isRegularSeasonComplete ? (
@@ -62,15 +62,21 @@ export function StandingsTable({ season }: { season: SeasonModel }) {
           </span>
         )}
       </CardHeader>
-      <Table caption={`${season.season} regular-season standings`} className="min-w-[36rem]">
+      <Table caption={`${season.season} regular-season standings`} className="min-w-[40rem]">
         <HeadRow>
-          <Th>#</Th>
-          <Th>Team</Th>
+          <Th sticky="first" className="w-[3.25rem]">
+            #
+          </Th>
+          <Th sticky="after-rank">Team</Th>
           <Th align="right">Record</Th>
-          <Th align="right">PF</Th>
-          <Th align="right">PA</Th>
+          <Th align="right" abbr="Points for">
+            PF
+          </Th>
+          <Th align="right" abbr="Points against">
+            PA
+          </Th>
           <Th align="right">Streak</Th>
-          <Th className="hidden md:table-cell">Form</Th>
+          <Th abbr="Last ten results, oldest first">Form</Th>
         </HeadRow>
         <tbody>
           {season.standings.map((row) => {
@@ -87,8 +93,9 @@ export function StandingsTable({ season }: { season: SeasonModel }) {
                 <RankCell
                   rank={row.rank}
                   tone={row.rank === 1 ? 'gold' : inPlayoffs ? 'brand' : 'dim'}
+                  sticky="first"
                 />
-                <Td>
+                <Td sticky="after-rank" className="min-w-[11rem]">
                   <TeamChip team={season.teamsByRosterId.get(row.rosterId)} showManager />
                 </Td>
                 <Td align="right" className="font-semibold">
@@ -104,7 +111,7 @@ export function StandingsTable({ season }: { season: SeasonModel }) {
                 <Td align="right">
                   <Streak streak={row.streak} />
                 </Td>
-                <Td className="hidden md:table-cell">
+                <Td>
                   <FormStrip form={row.form} />
                 </Td>
               </Row>

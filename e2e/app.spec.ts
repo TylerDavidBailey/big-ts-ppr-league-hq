@@ -149,13 +149,22 @@ test.describe('a finished season', () => {
   });
 
   test('summarises every award on the overview', async ({ page }) => {
-    const glance = page.getByRole('region', { name: 'Awards at a glance' });
+    const glance = page.getByRole('list', { name: 'Award leaders' });
     await expect(glance.getByText('2,237.72 PF')).toBeVisible();
     await expect(glance.getByText('200.52 pts')).toBeVisible();
     await expect(glance.getByText('55.40 pts')).toBeVisible();
-    await expect(glance.getByRole('link', { name: 'All awards' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'All places' })).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'Playoff seeds' })).toBeVisible();
+  });
+
+  test('names the section in the heading and the tab title', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 2, name: 'Overview' })).toBeVisible();
+    await expect(page).toHaveTitle(/^Overview · 2025 season · /);
+
+    await page.goto('/#/2025/stats');
+    await expect(page.getByRole('heading', { level: 2, name: 'Stats' })).toBeVisible();
+    await expect(page).toHaveTitle(/^Stats · 2025 season · /);
   });
 
   test('resolves every paid award with five places', async ({ page }) => {
@@ -180,7 +189,7 @@ test.describe('a finished season', () => {
   test('lists a beer duty loser for all 14 regular-season weeks', async ({ page }) => {
     await page.goto('/#/2025/beer-duty');
 
-    await expect(page.getByRole('heading', { name: 'Beer Duty' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 3, name: 'Beer Duty' })).toBeVisible();
     await expect(page.getByText('14 weeks')).toBeVisible();
 
     const weeks = page.getByRole('list', { name: 'Beer duty by week' });
@@ -239,6 +248,13 @@ test.describe('all-time', () => {
     const rows = page.getByRole('table').getByRole('row');
     await expect(rows).toHaveCount(13); // header plus 12 managers
     await expect(rows.nth(1)).toContainText('28-0');
+
+    // The finishes sit behind a switch, so no screen sees sixteen columns.
+    await expect(page.getByRole('columnheader', { name: /Titles/ })).toBeHidden();
+    await page.getByText('Finishes', { exact: true }).click();
+    await expect(page.getByRole('columnheader', { name: /Titles/ })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Record' })).toBeHidden();
+    await expect(rows.nth(1)).toContainText('2-2');
   });
 
   test('lists the champions of every season', async ({ page }) => {
@@ -265,11 +281,18 @@ test.describe('all-time', () => {
 });
 
 test.describe('error handling', () => {
-  test('explains when Sleeper cannot be reached', async ({ page }) => {
+  test('explains when Sleeper cannot be reached, and offers a retry', async ({ page }) => {
     await mockSleeper(page, { failCurrentLeague: true });
     await page.goto('/');
 
     await expect(page.getByText('Could not reach Sleeper')).toBeVisible({ timeout: 20_000 });
+
+    // Sleeper comes back, and the retry brings the season in without a reload.
+    await mockSleeper(page);
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('heading', { name: 'Rules and payouts' })).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test('explains a year the league never played', async ({ page }) => {
@@ -277,8 +300,12 @@ test.describe('error handling', () => {
     await expect(page.getByText('No 2019 season')).toBeVisible();
   });
 
-  test('sends an unknown route back to the newest season', async ({ page }) => {
+  test('says when a page does not exist', async ({ page }) => {
     await page.goto('/#/nonsense/path');
+    await expect(page.getByText('No such page')).toBeVisible();
+    await expect(page).toHaveTitle(/^Page not found · /);
+
+    await page.getByRole('link', { name: 'Current season' }).click();
     await expect(page).toHaveURL(/#\/$/);
   });
 });

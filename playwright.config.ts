@@ -21,8 +21,8 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 10_000 },
 
-  // The live suite is opt-in.
-  grepInvert: process.env.E2E_LIVE ? undefined : /@live/,
+  // The live suite and the screenshot set are opt-in.
+  grepInvert: process.env.E2E_LIVE ? /@shots/ : process.env.SHOTS ? undefined : /@live|@shots/,
 
   use: {
     baseURL: `http://localhost:${PORT}`,
@@ -31,11 +31,19 @@ export default defineConfig({
     // A sandbox with a preinstalled Chromium can point at it instead of
     // downloading the pinned build. CI leaves this unset.
     launchOptions: process.env.PW_CHROMIUM_PATH
-      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      ? { executablePath: process.env.PW_CHROMIUM_PATH, args: ['--no-sandbox'] }
       : {},
   },
 
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Screenshots only. The mocked suite runs on the desktop project alone.
+    {
+      name: 'mobile',
+      use: { ...devices['iPhone 13'], browserName: 'chromium' },
+      grep: /@shots/,
+    },
+  ],
 
   webServer: {
     command: `npx vite --port ${PORT} --strictPort`,

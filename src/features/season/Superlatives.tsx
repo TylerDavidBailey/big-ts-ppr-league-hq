@@ -1,8 +1,11 @@
+import type { ReactNode } from 'react';
+
 import { TeamChip } from '../shared/TeamChip';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StatTile } from '@/components/ui/StatTile';
 import { superlatives, type GameRecord, type StreakRecord } from '@/domain/stats';
 import type { SeasonModel } from '@/domain/types';
+import { cn } from '@/lib/cn';
 import { formatPoints } from '@/lib/format';
 
 function GameLine({ game, season }: { game: GameRecord; season: SeasonModel }) {
@@ -25,6 +28,33 @@ function StreakLine({ streak, season }: { streak: StreakRecord; season: SeasonMo
         Weeks {streak.fromWeek} to {streak.toWeek}
       </p>
     </div>
+  );
+}
+
+const COLUMNS = {
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-2 lg:grid-cols-3',
+  4: 'sm:grid-cols-2 lg:grid-cols-4',
+} as const;
+
+/** A named group of tiles, so games, streaks and consistency read apart. */
+export function TileGroup({
+  title,
+  columns = 3,
+  children,
+}: {
+  title: string;
+  /** How many tiles across on a wide screen. Match it to the count, so no tile sits alone. */
+  columns?: keyof typeof COLUMNS;
+  children: ReactNode;
+}) {
+  return (
+    <section aria-label={title} className="space-y-3">
+      <h4 className="font-display text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+        {title}
+      </h4>
+      <div className={cn('grid gap-3', COLUMNS[columns])}>{children}</div>
+    </section>
   );
 }
 
@@ -63,72 +93,81 @@ export function Superlatives({ season }: { season: SeasonModel }) {
       <CardHeader>
         <CardTitle>Season superlatives</CardTitle>
       </CardHeader>
-      <CardBody className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {games(
-          'Biggest blowout',
-          stats.biggestBlowout,
-          (game) => `by ${formatPoints(game.margin)}`,
-        )}
-        {games('Closest game', stats.closestGame, (game) => `by ${formatPoints(game.margin)}`)}
-        {games(
-          'Highest-scoring loss',
-          stats.highestScoringLoss,
-          (game) => `${formatPoints(game.points)} pts`,
-        )}
-        {games(
-          'Lowest-scoring win',
-          stats.lowestScoringWin,
-          (game) => `${formatPoints(game.points)} pts`,
-        )}
-        {streaks('Longest win streak', stats.longestWinStreak)}
-        {streaks('Longest losing streak', stats.longestLossStreak)}
-
-        <StatTile label="Weekly top scores">
-          {stats.weeklyHighs.length === 0 ? (
-            notYet
-          ) : (
-            <ol className="space-y-1.5">
-              {stats.weeklyHighs.slice(0, 5).map((row) => (
-                <li key={row.rosterId} className="flex items-center justify-between gap-2">
-                  <TeamChip team={team(row.rosterId)} size="sm" />
-                  <span className="font-display text-lg font-bold tabular text-brand">
-                    {row.count}
-                  </span>
-                </li>
-              ))}
-            </ol>
+      <CardBody className="space-y-6">
+        <TileGroup title="Games" columns={4}>
+          {games(
+            'Biggest blowout',
+            stats.biggestBlowout,
+            (game) => `by ${formatPoints(game.margin)}`,
           )}
-        </StatTile>
+          {games('Closest game', stats.closestGame, (game) => `by ${formatPoints(game.margin)}`)}
+          {games(
+            'Highest-scoring loss',
+            stats.highestScoringLoss,
+            (game) => `${formatPoints(game.points)} pts`,
+          )}
+          {games(
+            'Lowest-scoring win',
+            stats.lowestScoringWin,
+            (game) => `${formatPoints(game.points)} pts`,
+          )}
+        </TileGroup>
 
-        <StatTile
-          label="Most consistent"
-          value={
-            stats.mostConsistent[0] ? `±${formatPoints(stats.mostConsistent[0].stdDev)}` : undefined
-          }
-        >
-          {stats.mostConsistent.map((row) => (
-            <div key={row.rosterId} className="space-y-1.5">
-              <TeamChip team={team(row.rosterId)} size="sm" />
-              <p className="text-xs text-ink-dim">Averages {formatPoints(row.mean)} a week</p>
-            </div>
-          ))}
-        </StatTile>
+        <TileGroup title="Streaks" columns={2}>
+          {streaks('Longest win streak', stats.longestWinStreak)}
+          {streaks('Longest losing streak', stats.longestLossStreak)}
+        </TileGroup>
 
-        <StatTile
-          label="Least consistent"
-          value={
-            stats.leastConsistent[0]
-              ? `±${formatPoints(stats.leastConsistent[0].stdDev)}`
-              : undefined
-          }
-        >
-          {stats.leastConsistent.map((row) => (
-            <div key={row.rosterId} className="space-y-1.5">
-              <TeamChip team={team(row.rosterId)} size="sm" />
-              <p className="text-xs text-ink-dim">Averages {formatPoints(row.mean)} a week</p>
-            </div>
-          ))}
-        </StatTile>
+        <TileGroup title="Week to week">
+          <StatTile label="Weekly top scores">
+            {stats.weeklyHighs.length === 0 ? (
+              notYet
+            ) : (
+              <ol className="space-y-1.5">
+                {stats.weeklyHighs.slice(0, 5).map((row) => (
+                  <li key={row.rosterId} className="flex items-center justify-between gap-2">
+                    <TeamChip team={team(row.rosterId)} size="sm" />
+                    <span className="font-display text-lg font-bold tabular text-brand">
+                      {row.count}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </StatTile>
+
+          <StatTile
+            label="Most consistent"
+            value={
+              stats.mostConsistent[0]
+                ? `±${formatPoints(stats.mostConsistent[0].stdDev)}`
+                : undefined
+            }
+          >
+            {stats.mostConsistent.map((row) => (
+              <div key={row.rosterId} className="space-y-1.5">
+                <TeamChip team={team(row.rosterId)} size="sm" />
+                <p className="text-xs text-ink-dim">Averages {formatPoints(row.mean)} a week</p>
+              </div>
+            ))}
+          </StatTile>
+
+          <StatTile
+            label="Least consistent"
+            value={
+              stats.leastConsistent[0]
+                ? `±${formatPoints(stats.leastConsistent[0].stdDev)}`
+                : undefined
+            }
+          >
+            {stats.leastConsistent.map((row) => (
+              <div key={row.rosterId} className="space-y-1.5">
+                <TeamChip team={team(row.rosterId)} size="sm" />
+                <p className="text-xs text-ink-dim">Averages {formatPoints(row.mean)} a week</p>
+              </div>
+            ))}
+          </StatTile>
+        </TileGroup>
       </CardBody>
     </Card>
   );

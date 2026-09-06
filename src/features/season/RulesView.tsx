@@ -42,7 +42,7 @@ function SeasonFormat({ season }: { season: SeasonModel }) {
 /** The money and the wording, then the format Sleeper enforces. */
 export function RulesView({ season }: { season: SeasonModel }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <RulesCard season={season} />
       <SeasonFormat season={season} />
     </div>

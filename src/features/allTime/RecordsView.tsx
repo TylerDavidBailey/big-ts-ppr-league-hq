@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { ManagerChip } from '../shared/ManagerChip';
+import { TileGroup } from '../season/Superlatives';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StatTile } from '@/components/ui/StatTile';
@@ -54,9 +55,32 @@ function RecordCard({ record }: { record: AllTimeRecord }) {
   );
 }
 
+/** Which group a record belongs in, by id. Anything new lands in the last group. */
+const GROUPS: { title: string; columns: 2 | 3 | 4; ids: string[] }[] = [
+  {
+    title: 'Over a season',
+    columns: 3,
+    ids: ['best-record', 'most-points-season', 'longest-win-streak'],
+  },
+  {
+    title: 'In one week',
+    columns: 4,
+    ids: ['highest-team-week', 'lowest-team-week', 'highest-starter-week', 'biggest-blowout'],
+  },
+  { title: 'Tallies', columns: 2, ids: ['most-weekly-highs', 'most-beer-duties'] },
+];
+
 /** Every single-week and single-season record, with everyone who holds it. */
 export function RecordsView({ summaries }: { summaries: SeasonSummary[] }) {
   const records = allTimeRecords(summaries);
+  const placed = new Set(GROUPS.flatMap((group) => group.ids));
+  const groups = GROUPS.map((group) => ({
+    title: group.title,
+    columns: group.columns,
+    records: group.ids.flatMap((id) => records.filter((record) => record.id === id)),
+  }));
+  const rest = records.filter((record) => !placed.has(record.id));
+  if (rest.length > 0) groups[groups.length - 1]?.records.push(...rest);
 
   return (
     <Card>
@@ -64,10 +88,16 @@ export function RecordsView({ summaries }: { summaries: SeasonSummary[] }) {
         <CardTitle>Record book</CardTitle>
         <span className="text-xs text-ink-dim">Regular season only</span>
       </CardHeader>
-      <CardBody className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {records.map((record) => (
-          <RecordCard key={record.id} record={record} />
-        ))}
+      <CardBody className="space-y-6">
+        {groups
+          .filter((group) => group.records.length > 0)
+          .map((group) => (
+            <TileGroup key={group.title} title={group.title} columns={group.columns}>
+              {group.records.map((record) => (
+                <RecordCard key={record.id} record={record} />
+              ))}
+            </TileGroup>
+          ))}
       </CardBody>
     </Card>
   );

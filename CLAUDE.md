@@ -26,6 +26,8 @@ make fix        # auto-fix lint findings and reformat
 make test       # unit tests once
 make e2e        # browser tests against mocked Sleeper responses
 make e2e-live   # browser tests against the real API. Run after touching src/lib/sleeper/
+make shots      # full-page screenshots of every state, desktop and phone, into screenshots/
+make shots-live # the same set from the real API
 make up         # dev server in the background at http://localhost:5173/
 make down       # stop it
 make players    # regenerate public/data/players.min.json from Sleeper
@@ -167,3 +169,6 @@ Nine routes cover the states that matter. Run `make up` and open each one.
 
 The in-season state has no live league to open. `e2e/fixtures.ts` fakes one with the
 `liveWeek` option, which the browser tests use.
+
+`make shots` captures every one of these states, plus the error and not-found pages, at
+1280 and 390 wide into `screenshots/`. Look at them after a layout change.
