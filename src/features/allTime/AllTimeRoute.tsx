@@ -6,12 +6,14 @@ import { RecordsView } from './RecordsView';
 import { useLeagueContext } from '../league/useRouteLeague';
 import { FetchError } from '../shared/FetchError';
 import { TabNav } from '../shared/TabNav';
+import { MetaChip } from '@/components/ui/MetaChip';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { computeSeasonAwards } from '@/domain/awards';
 import type { SeasonSummary } from '@/domain/history';
 import { LEAGUE } from '@/league.config';
+import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { playerNameResolver } from '@/lib/players';
 import { useAllSeasonModels, usePlayerIndex } from '@/lib/sleeper/queries';
 
@@ -32,6 +34,8 @@ const VIEWS: { view: AllTimeView; label: string; path: string }[] = [
 export function AllTimeRoute({ view }: { view: AllTimeView }) {
   const { chain, chainLoading } = useLeagueContext();
   const results = useAllSeasonModels(chain);
+  const label = VIEWS.find((item) => item.view === view)?.label ?? 'Managers';
+  useDocumentTitle(label, 'All-time');
   const playerIndex = usePlayerIndex().data;
 
   // A fresh array every render, so the memo keys on when each season last
@@ -63,18 +67,25 @@ export function AllTimeRoute({ view }: { view: AllTimeView }) {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="All-time"
+        eyebrow="All-time"
+        title={label}
         meta={
           pending ? (
-            <span className="flex items-center gap-2">
-              <Spinner className="size-3.5" />
+            <MetaChip>
+              <Spinner className="size-3" />
               Loading seasons, {summaries.length} of {chainLoading ? '?' : chain.length} in
-            </span>
+            </MetaChip>
           ) : (
-            <span>
-              {played} {played === 1 ? 'season' : 'seasons'} played
-              {first && last && first !== last ? `, ${first} to ${last}` : ''}
-            </span>
+            <>
+              <MetaChip>
+                {played} {played === 1 ? 'season' : 'seasons'} played
+              </MetaChip>
+              {first && last && first !== last ? (
+                <MetaChip>
+                  {first} to {last}
+                </MetaChip>
+              ) : null}
+            </>
           )
         }
       />

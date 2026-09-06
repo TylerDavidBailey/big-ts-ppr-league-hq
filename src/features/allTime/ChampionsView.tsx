@@ -27,7 +27,14 @@ function TitleCount({ summaries }: { summaries: SeasonSummary[] }) {
           <StatTile
             key={row.key}
             label={row.titles === 1 ? '1 title' : `${row.titles} titles`}
-            value={'🏆'.repeat(Math.min(row.titles, 5))}
+            value={
+              <span className="flex items-baseline gap-2">
+                <span aria-hidden className="text-xl">
+                  🏆
+                </span>
+                {row.titles}
+              </span>
+            }
             tone="gold"
             badge={
               row.runnerUps > 0 ? (
@@ -56,13 +63,13 @@ function ChampionsTable({ summaries }: { summaries: SeasonSummary[] }) {
     );
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <CardHeader>
         <CardTitle>Champions by season</CardTitle>
       </CardHeader>
       <Table caption="Champions by season" className="min-w-[48rem]">
         <HeadRow>
-          <Th>Season</Th>
+          <Th sticky="first">Season</Th>
           <Th>🏆 Champion</Th>
           <Th>🥈 Runner-up</Th>
           <Th>🥉 Third</Th>
@@ -73,7 +80,7 @@ function ChampionsTable({ summaries }: { summaries: SeasonSummary[] }) {
         <tbody>
           {rows.map((row) => (
             <Row key={row.season.leagueId}>
-              <Td>
+              <Td sticky="first" className="whitespace-nowrap">
                 <Link
                   to={`/${row.season.season}`}
                   className="font-display text-lg font-bold tabular text-brand underline-offset-4 hover:underline"

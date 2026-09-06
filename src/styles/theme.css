@@ -35,6 +35,8 @@
   --color-canvas: var(--color-palette-gray900);
   --color-surface: var(--color-palette-gray800);
   --color-card: var(--color-palette-gray700);
+  /* `card` at 70% over the canvas, flattened, for cells that must be opaque. */
+  --color-card-solid: #1b1f37;
   --color-raised: var(--color-palette-gray600);
 
   --color-ink: var(--color-palette-gray100);
@@ -105,6 +107,14 @@
     box-shadow:
       0 0 0 1px rgb(0 255 249 / 0.25),
       0 0 24px -6px rgb(0 255 249 / 0.35);
+  }
+
+  /* A sideways scroller with no bar; the fade below says there is more. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

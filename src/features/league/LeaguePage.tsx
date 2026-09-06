@@ -35,7 +35,16 @@ export function LeaguePage() {
         }
       />
       <main className="mx-auto w-full max-w-6xl px-5 py-6 sm:py-8">
-        {headQuery.error ? <FetchError error={headQuery.error} /> : <Outlet context={context} />}
+        {headQuery.error ? (
+          <FetchError
+            error={headQuery.error}
+            onRetry={() => {
+              void headQuery.refetch();
+            }}
+          />
+        ) : (
+          <Outlet context={context} />
+        )}
       </main>
     </>
   );

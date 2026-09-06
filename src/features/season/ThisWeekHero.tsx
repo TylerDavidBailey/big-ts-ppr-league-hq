@@ -21,7 +21,7 @@ export function ThisWeekHero({ season, awards }: ThisWeekHeroProps) {
   return (
     <section
       aria-label="Latest beer duty"
-      className="glow-brand flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-brand/30 bg-card/70 px-5 py-4"
+      className="glow-brand flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-2xl border border-brand/30 bg-card/70 px-5 py-4"
     >
       <div className="min-w-0">
         <p className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-brand">
@@ -37,9 +37,8 @@ export function ThisWeekHero({ season, awards }: ThisWeekHeroProps) {
             />
           ))}
         </div>
-        <p className="mt-2 max-w-xl text-xs text-ink-dim">{LEAGUE.punishment.rule}</p>
       </div>
-      <div className="text-right">
+      <div className="flex items-baseline gap-3 sm:flex-col sm:items-end sm:gap-0.5">
         <p className="font-display text-3xl font-bold tabular text-loss">
           {formatPoints(losers[0]?.value ?? 0)} pts
         </p>
@@ -47,7 +46,7 @@ export function ThisWeekHero({ season, awards }: ThisWeekHeroProps) {
           to={`/${season.season}/beer-duty`}
           className="text-xs font-semibold text-brand underline-offset-4 hover:underline"
         >
-          Every week
+          Every week →
         </Link>
       </div>
     </section>

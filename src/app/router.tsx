@@ -1,13 +1,15 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
 import { AllTimeRoute } from '@/features/allTime/AllTimeRoute';
 import { LeaguePage } from '@/features/league/LeaguePage';
 import { SeasonRoute } from '@/features/season/SeasonRoute';
+import { NotFound } from '@/features/shared/NotFound';
 
 /**
  * `/` is the newest season, so the link people share never goes stale. A year
  * reaches any season, and each season has one route per section. `all-time`
- * reads every season at once.
+ * reads every season at once. Anything else is a page that does not exist,
+ * and says so, so a stale link is not mistaken for the current season.
  */
 export function AppRoutes() {
   return (
@@ -23,7 +25,7 @@ export function AppRoutes() {
         <Route path=":season/standings" element={<SeasonRoute view="standings" />} />
         <Route path=":season/stats" element={<SeasonRoute view="stats" />} />
         <Route path=":season/rules" element={<SeasonRoute view="rules" />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );

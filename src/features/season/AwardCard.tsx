@@ -2,6 +2,7 @@ import { PlayerChip } from '../shared/PlayerChip';
 import { TeamChip } from '../shared/TeamChip';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import type { RankedEntry } from '@/domain/awards';
 import type { SeasonModel } from '@/domain/types';
 import type { AwardConfig } from '@/league.config';
@@ -32,9 +33,10 @@ interface AwardCardProps {
   formatValue: (value: number) => string;
 }
 
-/** One paid award: the winner large, then the places behind them. */
+/** One paid award: the rule, the winner large, then the places behind them. */
 export function AwardCard({ config, entries, season, formatValue }: AwardCardProps) {
-  const playerIndex = usePlayerIndex().data ?? {};
+  const playerQuery = usePlayerIndex();
+  const playerIndex = playerQuery.data ?? {};
   const winners = entries.filter((entry) => entry.place === 1);
   const runnersUp = entries.filter((entry) => entry.place > 1);
   const isTie = winners.length > 1;
@@ -42,21 +44,24 @@ export function AwardCard({ config, entries, season, formatValue }: AwardCardPro
 
   return (
     <Card className="flex h-full flex-col">
-      <CardHeader>
-        <CardTitle>
-          <span aria-hidden className="mr-2 text-base">
-            {config.icon}
+      <CardHeader className="items-start">
+        <div className="min-w-0">
+          <CardTitle>
+            <span aria-hidden className="mr-2 text-base">
+              {config.icon}
+            </span>
+            {config.name}
+          </CardTitle>
+          <p className="mt-1 text-xs leading-relaxed text-ink-dim">{config.rule}</p>
+        </div>
+        <span className="flex shrink-0 flex-col items-end gap-1.5">
+          <span className="font-display text-lg font-bold tabular text-gold">
+            {formatMoney(config.payout)}
           </span>
-          {config.name}
-        </CardTitle>
-        <span className="flex items-center gap-2">
           {isTie ? <Badge tone="purple">Tied</Badge> : null}
           {!season.isRegularSeasonComplete && throughWeek ? (
             <Badge tone="brand">Through wk {throughWeek}</Badge>
           ) : null}
-          <span className="font-display text-lg font-bold tabular text-gold">
-            {formatMoney(config.payout)}
-          </span>
         </span>
       </CardHeader>
 
@@ -74,7 +79,11 @@ export function AwardCard({ config, entries, season, formatValue }: AwardCardPro
                 />
                 {winner.playerId ? (
                   <div className="mt-2 rounded-xl border border-hairline bg-surface/60 px-3 py-2.5">
-                    <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} />
+                    {playerQuery.isPending ? (
+                      <Skeleton className="h-9 w-40" />
+                    ) : (
+                      <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} />
+                    )}
                   </div>
                 ) : null}
                 <p className="mt-2 flex items-baseline gap-2">
@@ -122,10 +131,11 @@ export function AwardCard({ config, entries, season, formatValue }: AwardCardPro
           </ol>
         ) : null}
 
-        <p className="mt-auto border-t border-hairline pt-3 text-xs leading-relaxed text-ink-dim">
-          {isTie ? 'Tied, so this award is the league’s to settle. ' : ''}
-          {config.rule}
-        </p>
+        {isTie ? (
+          <p className="mt-auto border-t border-hairline pt-3 text-xs leading-relaxed text-ink-dim">
+            Tied, so this award is the league’s to settle.
+          </p>
+        ) : null}
       </CardBody>
     </Card>
   );

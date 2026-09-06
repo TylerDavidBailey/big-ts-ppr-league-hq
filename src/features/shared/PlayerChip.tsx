@@ -15,18 +15,22 @@ const POSITION_TONE: Record<string, string> = {
 
 interface PlayerChipProps {
   player: PlayerInfo;
+  size?: 'sm' | 'md';
   className?: string;
 }
 
-export function PlayerChip({ player, className }: PlayerChipProps) {
+const SIZES = { sm: 'size-7', md: 'size-9' } as const;
+
+export function PlayerChip({ player, size = 'md', className }: PlayerChipProps) {
   const [failed, setFailed] = useState(false);
+  const shell = cn('shrink-0 rounded-full border border-hairline bg-raised', SIZES[size]);
 
   return (
     <span className={cn('flex min-w-0 items-center gap-2.5', className)}>
       {failed ? (
         <span
           aria-hidden
-          className="grid size-9 shrink-0 place-items-center rounded-full border border-hairline bg-raised text-xs font-semibold text-ink-dim"
+          className={cn(shell, 'grid place-items-center text-xs font-semibold text-ink-dim')}
         >
           {player.name.slice(0, 2).toUpperCase()}
         </span>
@@ -35,7 +39,7 @@ export function PlayerChip({ player, className }: PlayerChipProps) {
           src={playerImageUrl(player.id, player.position)}
           alt=""
           loading="lazy"
-          className="size-9 shrink-0 rounded-full border border-hairline bg-raised object-cover"
+          className={cn(shell, 'object-cover')}
           onError={() => {
             setFailed(true);
           }}

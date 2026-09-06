@@ -3,11 +3,26 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import type { RankedEntry, SeasonAwards } from '@/domain/awards';
 import type { SeasonModel } from '@/domain/types';
 import { LEAGUE } from '@/league.config';
+import { cn } from '@/lib/cn';
 import { formatPoints } from '@/lib/format';
 
 interface BeerDutyCardProps {
   season: SeasonModel;
   awards: SeasonAwards;
+}
+
+/** The week number as a left rail, so the column scans top to bottom. */
+function WeekRail({ week, live = false }: { week: number; live?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'grid h-9 w-11 shrink-0 place-items-center rounded-lg font-display text-xs font-semibold uppercase tracking-wide',
+        live ? 'border border-dashed border-brand/50 text-brand' : 'bg-white/[0.04] text-ink-dim',
+      )}
+    >
+      Wk {week}
+    </span>
+  );
 }
 
 /** Every week's lowest scorer, newest first, plus the week still being played. */
@@ -43,33 +58,25 @@ export function BeerDutyCard({ season, awards }: BeerDutyCardProps) {
         ) : (
           <ul aria-label="Beer duty by week" className="grid gap-2 sm:grid-cols-2">
             {liveWeek ? (
-              <li className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-brand/40 px-3 py-2.5">
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="w-9 shrink-0 font-display text-xs font-semibold uppercase tracking-wide text-brand">
-                    Wk {liveWeek}
-                  </span>
-                  <span className="text-sm text-ink-dim">In progress</span>
-                </span>
+              <li className="flex items-center gap-3 rounded-xl border border-dashed border-brand/40 px-3 py-2">
+                <WeekRail week={liveWeek} live />
+                <span className="text-sm text-ink-dim">In progress</span>
               </li>
             ) : null}
             {settled.map(([week, losers]) => (
               <li
                 key={week}
-                className="flex items-center justify-between gap-2 rounded-xl border border-hairline bg-surface/60 px-3 py-2.5"
+                className="flex items-center gap-3 rounded-xl border border-hairline bg-surface/60 px-3 py-2"
               >
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="w-9 shrink-0 font-display text-xs font-semibold uppercase tracking-wide text-ink-dim">
-                    Wk {week}
-                  </span>
-                  <span className="min-w-0 space-y-1">
-                    {losers.map((loser) => (
-                      <TeamChip
-                        key={loser.rosterId}
-                        team={season.teamsByRosterId.get(loser.rosterId)}
-                        size="sm"
-                      />
-                    ))}
-                  </span>
+                <WeekRail week={week} />
+                <span className="min-w-0 flex-1 space-y-1">
+                  {losers.map((loser) => (
+                    <TeamChip
+                      key={loser.rosterId}
+                      team={season.teamsByRosterId.get(loser.rosterId)}
+                      size="sm"
+                    />
+                  ))}
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular text-loss">
                   {formatPoints(losers[0]?.value ?? 0)} pts
