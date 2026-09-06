@@ -26,7 +26,7 @@ export function TabNav({ label, items }: { label: string; items: TabItem[] }) {
 
   return (
     <nav aria-label={label} className="rounded-xl border border-hairline bg-surface/60">
-      <ScrollX hideScrollbar className="snap-x rounded-xl">
+      <ScrollX hideScrollbar fade="surface" wrapperClassName="rounded-xl" className="snap-x">
         <ul className="flex gap-1 p-1">
           {items.map((item) => (
             <li key={item.to} className="shrink-0 snap-start">
