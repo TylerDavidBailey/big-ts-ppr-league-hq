@@ -76,7 +76,8 @@ make open        # open it in a browser
 make down        # stop it
 ```
 
-`make` on its own lists every target. `make check` runs exactly what CI runs.
+`make` on its own lists every target. `make check` runs exactly what CI runs. `make shots`
+screenshots every page state on a desktop and a phone into `screenshots/`.
 
 ## How it works
 

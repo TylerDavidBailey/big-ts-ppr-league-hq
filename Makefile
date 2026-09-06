@@ -226,6 +226,18 @@ e2e-live: install browsers ## Run the browser tests against the real Sleeper API
 e2e-report: ## Open the last browser-test report
 	@npm run e2e:report
 
+.PHONY: shots
+shots: install browsers ## Screenshot every page state into screenshots/, from the fixtures
+	$(call say,"Capturing screenshots from the fixtures")
+	@SHOTS=1 npm run e2e -- --grep @shots
+	$(call ok,"screenshots/ is ready")
+
+.PHONY: shots-live
+shots-live: install browsers ## Screenshot every page state from the real Sleeper API
+	$(call say,"Capturing screenshots from the live API")
+	@SHOTS=1 SHOTS_LIVE=1 npm run e2e -- --grep @shots
+	$(call ok,"screenshots/ is ready")
+
 .PHONY: browsers
 browsers: $(RUN_DIR)/browsers.stamp ## Download the Playwright browsers
 

@@ -28,6 +28,7 @@ npm-debug.log*
 .make/
 
 # Playwright
+screenshots/
 playwright-report/
 test-results/
 blob-report/
