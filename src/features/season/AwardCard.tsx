@@ -1,3 +1,4 @@
+import { Avatar } from '../shared/Avatar';
 import { PlayerChip } from '../shared/PlayerChip';
 import { TeamChip } from '../shared/TeamChip';
 import { Badge } from '@/components/ui/Badge';
@@ -69,36 +70,54 @@ export function AwardCard({ config, entries, season, formatValue }: AwardCardPro
         {winners.length === 0 ? (
           <p className="py-4 text-sm text-ink-dim">Not decided yet.</p>
         ) : (
-          <div className="space-y-3">
-            {winners.map((winner) => (
-              <div key={`${winner.rosterId}-${winner.week ?? 0}-${winner.playerId ?? ''}`}>
-                <TeamChip
-                  team={season.teamsByRosterId.get(winner.rosterId)}
-                  showManager
-                  size={isTie ? 'md' : 'lg'}
-                />
-                {winner.playerId ? (
-                  <div className="mt-2 rounded-xl border border-hairline bg-surface/60 px-3 py-2.5">
-                    {playerQuery.isPending ? (
-                      <Skeleton className="h-9 w-40" />
-                    ) : (
-                      <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} />
-                    )}
+          <div className="space-y-2">
+            {winners.map((winner) => {
+              const team = season.teamsByRosterId.get(winner.rosterId);
+              return (
+                <div
+                  key={`${winner.rosterId}-${winner.week ?? 0}-${winner.playerId ?? ''}`}
+                  className="rounded-xl border border-gold/40 bg-gold/[0.06] px-3.5 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar
+                      avatarId={team?.avatarId}
+                      name={team?.name ?? '?'}
+                      size={isTie ? 'md' : 'lg'}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-ink">
+                        {team?.name ?? 'Unknown team'}
+                      </span>
+                      {team && team.name !== team.managerName ? (
+                        <span className="block truncate text-xs text-ink-dim">
+                          {team.managerName}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-display text-3xl leading-none font-bold tabular text-brand">
+                          {formatValue(winner.value)}
+                        </span>
+                        {winner.week ? (
+                          <span className="text-xs text-ink-dim">Week {winner.week}</span>
+                        ) : null}
+                        {winner.detail ? (
+                          <span className="text-xs text-ink-dim">{winner.detail}</span>
+                        ) : null}
+                      </span>
+                    </div>
                   </div>
-                ) : null}
-                <p className="mt-2 flex items-baseline gap-2">
-                  <span className="font-display text-3xl font-bold tabular text-brand">
-                    {formatValue(winner.value)}
-                  </span>
-                  {winner.week ? (
-                    <span className="text-xs text-ink-dim">Week {winner.week}</span>
+                  {winner.playerId ? (
+                    <div className="mt-3 border-t border-gold/20 pt-3">
+                      {playerQuery.isPending ? (
+                        <Skeleton className="h-7 w-40" />
+                      ) : (
+                        <PlayerChip player={lookupPlayer(playerIndex, winner.playerId)} size="sm" />
+                      )}
+                    </div>
                   ) : null}
-                  {winner.detail ? (
-                    <span className="text-xs text-ink-dim">{winner.detail}</span>
-                  ) : null}
-                </p>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
 
