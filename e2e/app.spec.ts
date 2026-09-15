@@ -110,13 +110,35 @@ test.describe('a season in progress', () => {
     await expect(page.getByText('Week 9 in progress', { exact: true })).toBeVisible();
     await expect(page.getByText('Settled through week 8')).toBeVisible();
 
-    const hero = page.getByRole('region', { name: 'Latest beer duty' });
-    await expect(hero).toBeVisible();
-    await expect(hero).toContainText('Beer duty, week 8');
+    const card = page.getByRole('region', { name: 'Week 8' });
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('Beer Duty, week 8');
+    await expect(card).toContainText('Through week 8');
 
     // The playoffs have not started, so the overview shows the race instead.
     await expect(page.getByRole('heading', { name: 'Playoff picture' })).toBeVisible();
     await expect(page.getByRole('list', { name: 'Playoff finishes' })).toBeHidden();
+  });
+
+  test('serves the week card alone at the snapshot route', async ({ page }) => {
+    await page.goto('/#/snapshot');
+
+    const card = page.getByRole('region', { name: 'Week 8' });
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('Beer Duty, week 8');
+    await expect(card.getByRole('list', { name: 'Award leaders' })).toBeVisible();
+    await expect(card).toContainText('$125');
+    await expect(page).toHaveTitle(/^Snapshot · 2026 season · /);
+
+    // No chrome and no links inside the card, so a phone screenshot is just the card.
+    await expect(page.getByRole('banner')).toBeHidden();
+    await expect(page.getByRole('navigation', { name: 'Season sections' })).toBeHidden();
+    await expect(page.getByRole('contentinfo')).toBeHidden();
+    await expect(card.getByRole('link')).toHaveCount(0);
+
+    await page.getByRole('link', { name: 'Overview' }).click();
+    await expect(page).toHaveURL(/#\/2026$/);
+    await expect(page.getByRole('navigation', { name: 'Season sections' })).toBeVisible();
   });
 
   test('marks the live week as in progress on the beer duty page', async ({ page }) => {
@@ -154,8 +176,21 @@ test.describe('a finished season', () => {
     await expect(glance.getByText('200.52 pts')).toBeVisible();
     await expect(glance.getByText('55.40 pts')).toBeVisible();
     await expect(page.getByRole('link', { name: 'All places' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Snapshot' })).toBeVisible();
 
     await expect(page.getByRole('heading', { name: 'Playoff seeds' })).toBeVisible();
+  });
+
+  test('snapshots the final week of a finished season', async ({ page }) => {
+    await page.getByRole('link', { name: 'Snapshot' }).click();
+    await expect(page).toHaveURL(/#\/2025\/snapshot$/);
+
+    const card = page.getByRole('region', { name: 'Week 14' });
+    await expect(card).toBeVisible();
+    await expect(card.getByText('Final', { exact: true })).toBeVisible();
+    await expect(card).toContainText('Beer Duty, week 14');
+    await expect(card.getByText('2,237.72 PF')).toBeVisible();
+    await expect(page.getByRole('banner')).toBeHidden();
   });
 
   test('names the section in the heading and the tab title', async ({ page }) => {

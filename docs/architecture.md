@@ -133,11 +133,15 @@ rewrite, so a path route would 404 on a cold load. A hash route needs no trick, 
 `/` is the newest season, so the shared link never goes stale. A year reaches any season,
 and each season has one route per section: the overview at the year itself, then
 `awards`, `beer-duty`, `standings`, `stats`, and `rules`. `all-time` reads every season
-into three sections: the managers, `champions`, and `records`.
+into three sections: the managers, `champions`, and `records`. `snapshot`, at the root or
+under a year, is the overview's week card on its own with no site chrome, so one phone
+screenshot carries the week's beer duty and the award leaders into the group chat.
 
-Every route renders inside one shell, `LeaguePage`, which owns the top bar and the season
-pills. `SeasonRoute` and `AllTimeRoute` each fetch once and switch the section under a
-shared page header, so moving between sections never refetches.
+Every route renders inside one shell, `LeaguePage`, which owns the top bar, the season
+pills, and the footer. `SeasonRoute` and `AllTimeRoute` each fetch once and switch the
+section under a shared page header, so moving between sections never refetches. The
+snapshot routes render the same shell in its bare mode, which drops the chrome and narrows
+the column to a phone.
 
 ## Base path
 
