@@ -81,11 +81,13 @@ export function WeekCard({ season, awards, mode }: WeekCardProps) {
   const losers = awards.beerDuty.filter((entry) => entry.week === week);
   const snapshot = mode === 'snapshot';
 
-  const paid = (config: AwardConfig, entries: RankedEntry[], unit: string) => (
+  // No payout on the card: a mid-season leader has won nothing yet, and a
+  // dollar figure next to a name reads as if they had. The money is on the
+  // awards page.
+  const award = (config: AwardConfig, entries: RankedEntry[], unit: string) => (
     <AwardRow
       icon={config.icon}
       name={config.name}
-      payout={config.payout}
       leaders={leadersOf(entries)}
       season={season}
       value={(entry) => `${formatPoints(entry.value)} ${unit}`}
@@ -128,21 +130,18 @@ export function WeekCard({ season, awards, mode }: WeekCardProps) {
               </span>
             </div>
             <ul aria-label="Award leaders" className="divide-y divide-hairline/60">
-              {paid(LEAGUE.awards.regularSeasonChamp, awards.regularSeasonChamp, 'PF')}
-              {paid(LEAGUE.awards.highestTeamWeek, awards.highestTeamWeek, 'pts')}
-              {paid(LEAGUE.awards.highestStarterWeek, awards.highestStarterWeek, 'pts')}
+              {award(LEAGUE.awards.regularSeasonChamp, awards.regularSeasonChamp, 'PF')}
+              {award(LEAGUE.awards.highestTeamWeek, awards.highestTeamWeek, 'pts')}
+              {award(LEAGUE.awards.highestStarterWeek, awards.highestStarterWeek, 'pts')}
             </ul>
           </div>
         </CardBody>
 
         {snapshot ? null : (
-          <CardFooter className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <span>{LEAGUE.punishment.icon} is a punishment, not a payout.</span>
-            <span className="flex flex-wrap items-center gap-4">
-              <SectionLink to={`/${season.season}/awards`}>All places</SectionLink>
-              <SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>
-              <SectionLink to={`/${season.season}/snapshot`}>📸 Snapshot</SectionLink>
-            </span>
+          <CardFooter className="flex flex-wrap items-center gap-4">
+            <SectionLink to={`/${season.season}/awards`}>All places</SectionLink>
+            <SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>
+            <SectionLink to={`/${season.season}/snapshot`}>📸 Snapshot</SectionLink>
           </CardFooter>
         )}
       </Card>

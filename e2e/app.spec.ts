@@ -127,7 +127,8 @@ test.describe('a season in progress', () => {
     await expect(card).toBeVisible();
     await expect(card).toContainText('Beer Duty, week 8');
     await expect(card.getByRole('list', { name: 'Award leaders' })).toBeVisible();
-    await expect(card).toContainText('$125');
+    // Leaders, not winners: the card carries no money.
+    await expect(card).not.toContainText('$');
     await expect(page).toHaveTitle(/^Snapshot · 2026 season · /);
 
     // No chrome and no links inside the card, so a phone screenshot is just the card.

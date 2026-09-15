@@ -65,7 +65,7 @@ describe('WeekCard', () => {
     expect(within(card).getByText(LEAGUE.punishment.rule)).toBeInTheDocument();
   });
 
-  it('lists the three paid awards with their money, and nothing else', () => {
+  it('lists the three paid awards without their money, and nothing else', () => {
     renderCard(finished, 'snapshot');
 
     const leaders = within(screen.getByRole('list', { name: 'Award leaders' }));
@@ -73,9 +73,8 @@ describe('WeekCard', () => {
     for (const award of Object.values(LEAGUE.awards)) {
       expect(leaders.getByText(award.name)).toBeInTheDocument();
     }
-    expect(leaders.getAllByText(formatMoney(LEAGUE.awards.regularSeasonChamp.payout))).toHaveLength(
-      3,
-    );
+    // A leader has won nothing yet, so no dollar figure sits next to a name.
+    expect(screen.queryByText(formatMoney(LEAGUE.awards.regularSeasonChamp.payout))).toBeNull();
     // The season tally lives on the beer duty page; the card is about this week only.
     expect(screen.queryByText(/Most beer duty/i)).toBeNull();
     expect(screen.queryByText(/\d×/)).toBeNull();
