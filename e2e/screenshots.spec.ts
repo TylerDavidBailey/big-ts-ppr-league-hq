@@ -70,6 +70,14 @@ const SCENARIOS: Scenario[] = [
     mockOnly: true,
   },
   { label: '15-unknown-route', path: '/#/nonsense/path', ready: /season|page/i },
+  {
+    label: '16-live-snapshot',
+    path: '/#/snapshot',
+    mock: { liveWeek: 9 },
+    ready: 'Through week 8',
+    mockOnly: true,
+  },
+  { label: '17-final-snapshot', path: `/#/${finishedSeason}/snapshot`, ready: 'Final' },
 ];
 
 test.describe('screenshots @shots', () => {

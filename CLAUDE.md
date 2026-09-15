@@ -153,12 +153,16 @@ vocabulary. Sentence case headings. Straight quotes.
 
 ## Verifying a change by hand
 
-Nine routes cover the states that matter. Run `make up` and open each one.
+Ten routes cover the states that matter. Run `make up` and open each one.
 
 - `/` is the newest season's overview. While it is pre-draft, it shows the rules, the
-  payouts, three empty podium slots, and the managers.
-- `#/2025` is a finished season's overview: the podium, each award's winner, the beer duty
-  leader, and the playoff seeds.
+  payouts, three empty podium slots, and the managers. Once a week has settled, it leads with
+  the week card: that week's beer duty, then the leader of each award, beside the playoff
+  picture.
+- `#/2025` is a finished season's overview: the podium, then the week card for week 14 and
+  the playoff seeds.
+- `#/snapshot` is the newest season's week card alone, with no header, tabs, footer or links,
+  sized for a phone screenshot. `#/2025/snapshot` is the same for a finished season.
 - `#/2025/awards` has five places on every award card.
 - `#/2025/beer-duty` has 14 weeks and the season tally.
 - `#/2025/standings` has the table and the power rankings.
