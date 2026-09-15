@@ -65,29 +65,20 @@ describe('WeekCard', () => {
     expect(within(card).getByText(LEAGUE.punishment.rule)).toBeInTheDocument();
   });
 
-  it('lists the three paid awards with their money and the punishment tally', () => {
-    renderCard(finished, 'overview');
+  it('lists the three paid awards with their money, and nothing else', () => {
+    renderCard(finished, 'snapshot');
 
     const leaders = within(screen.getByRole('list', { name: 'Award leaders' }));
+    expect(leaders.getAllByRole('listitem')).toHaveLength(3);
     for (const award of Object.values(LEAGUE.awards)) {
       expect(leaders.getByText(award.name)).toBeInTheDocument();
     }
     expect(leaders.getAllByText(formatMoney(LEAGUE.awards.regularSeasonChamp.payout))).toHaveLength(
       3,
     );
-    expect(leaders.getByText(`Most ${LEAGUE.punishment.name.toLowerCase()}`)).toBeInTheDocument();
-    expect(leaders.getAllByText(/\d×/).length).toBeGreaterThan(0);
-  });
-
-  it('folds the punishment tally into one footer line in snapshot mode, to fit a phone', () => {
-    renderCard(finished, 'snapshot');
-
-    const leaders = within(screen.getByRole('list', { name: 'Award leaders' }));
-    expect(leaders.getAllByRole('listitem')).toHaveLength(3);
-    expect(
-      screen.getByText(`${LEAGUE.punishment.icon} Most ${LEAGUE.punishment.name.toLowerCase()}`),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/· \d×$/)).toBeInTheDocument();
+    // The season tally lives on the beer duty page; the card is about this week only.
+    expect(screen.queryByText(/Most beer duty/i)).toBeNull();
+    expect(screen.queryByText(/\d×/)).toBeNull();
   });
 
   it('carries no links in snapshot mode, so a screenshot has nothing to tap', () => {

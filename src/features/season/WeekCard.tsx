@@ -4,7 +4,7 @@ import { Avatar } from '../shared/Avatar';
 import { TeamChip } from '../shared/TeamChip';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardFooter } from '@/components/ui/Card';
-import { beerDutyTally, type RankedEntry, type SeasonAwards } from '@/domain/awards';
+import type { RankedEntry, SeasonAwards } from '@/domain/awards';
 import type { SeasonModel } from '@/domain/types';
 import { LEAGUE, type AwardConfig } from '@/league.config';
 import { formatPoints } from '@/lib/format';
@@ -70,7 +70,7 @@ function BeerDuty({
 }
 
 /**
- * The week in one card: who owes the punishment and who leads the money.
+ * The week in one card: who owes the punishment this week and who leads the money.
  *
  * The week is the newest settled regular-season week, never the one being
  * played, so a Tuesday screenshot shows Monday night's result and a live
@@ -80,8 +80,6 @@ export function WeekCard({ season, awards, mode }: WeekCardProps) {
   const week = season.regularSeasonWeeks.at(-1)?.week ?? 0;
   const losers = awards.beerDuty.filter((entry) => entry.week === week);
   const snapshot = mode === 'snapshot';
-  const tally = leadersOf(beerDutyTally(awards.beerDuty));
-  const tallyName = `Most ${LEAGUE.punishment.name.toLowerCase()}`;
 
   const paid = (config: AwardConfig, entries: RankedEntry[], unit: string) => (
     <AwardRow
@@ -133,47 +131,20 @@ export function WeekCard({ season, awards, mode }: WeekCardProps) {
               {paid(LEAGUE.awards.regularSeasonChamp, awards.regularSeasonChamp, 'PF')}
               {paid(LEAGUE.awards.highestTeamWeek, awards.highestTeamWeek, 'pts')}
               {paid(LEAGUE.awards.highestStarterWeek, awards.highestStarterWeek, 'pts')}
-              {snapshot ? null : (
-                <AwardRow
-                  icon={LEAGUE.punishment.icon}
-                  name={tallyName}
-                  leaders={tally}
-                  season={season}
-                  value={(entry) => `${entry.value}×`}
-                  detail={(entry) => entry.detail ?? ''}
-                  tone="loss"
-                  emptyText="Nobody yet."
-                />
-              )}
             </ul>
           </div>
         </CardBody>
 
-        <CardFooter className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          {snapshot ? (
-            <span className="flex min-w-0 items-baseline gap-2">
-              <span className="font-display text-[11px] font-semibold uppercase tracking-[0.14em]">
-                {LEAGUE.punishment.icon} {tallyName}
-              </span>
-              <span className="truncate text-ink-muted">
-                {tally.length > 0
-                  ? `${tally
-                      .map((entry) => season.teamsByRosterId.get(entry.rosterId)?.name ?? '?')
-                      .join(', ')} · ${tally[0]?.value ?? 0}×`
-                  : 'Nobody yet.'}
-              </span>
+        {snapshot ? null : (
+          <CardFooter className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <span>{LEAGUE.punishment.icon} is a punishment, not a payout.</span>
+            <span className="flex flex-wrap items-center gap-4">
+              <SectionLink to={`/${season.season}/awards`}>All places</SectionLink>
+              <SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>
+              <SectionLink to={`/${season.season}/snapshot`}>📸 Snapshot</SectionLink>
             </span>
-          ) : (
-            <>
-              <span>{LEAGUE.punishment.icon} is a punishment, not a payout.</span>
-              <span className="flex flex-wrap items-center gap-4">
-                <SectionLink to={`/${season.season}/awards`}>All places</SectionLink>
-                <SectionLink to={`/${season.season}/beer-duty`}>Every week</SectionLink>
-                <SectionLink to={`/${season.season}/snapshot`}>📸 Snapshot</SectionLink>
-              </span>
-            </>
-          )}
-        </CardFooter>
+          </CardFooter>
+        )}
       </Card>
     </section>
   );
