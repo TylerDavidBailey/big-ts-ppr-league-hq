@@ -72,7 +72,7 @@ export const LEAGUE: LeagueConfig = {
   punishment: {
     name: 'Beer Duty',
     icon: '🍺',
-    rule: 'Lowest team points in a week shotguns a beer before Sunday 1:00 PM kickoff. Video to the group chat.',
+    rule: 'Lowest team points in a week shotguns a beer before Thursday night football kickoff. Video to the group chat.',
   },
   places: 5,
   repoUrl: 'https://github.com/TylerDavidBailey/big-ts-ppr-league-hq',
